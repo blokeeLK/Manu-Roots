@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat — Júlia</title>
+
+  <!-- React + Babel via CDN (sem build) -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-app:        #111b21;
+      --bg-sidebar:    #202c33;
+      --bg-chat:       #0b141a;
+      --bg-header:     #202c33;
+      --bg-input:      #202c33;
+      --bg-bubble-in:  #202c33;
+      --bg-bubble-out: #005c4b;
+      --bg-typing:     #202c33;
+      --text-main:     #e9edef;
+      --text-muted:    #8696a0;
+      --text-time:     #667781;
+      --accent:        #00a884;
+      --border:        #2a3942;
+      --send-btn:      #00a884;
+      --cta-btn:       #25d366;
+      --cta-hover:     #1da851;
+      --scrollbar:     #2a3942;
+      --restart-btn:   #2a3942;
+    }
+
+    html, body, #root { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg-app);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .app-shell {
+      display: flex;
+      height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Sidebar (hidden on mobile) */
+    .sidebar {
+      width: 360px;
+      min-width: 260px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-header);
+    }
+    .sidebar-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .sidebar-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .sidebar-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    /* Chat area */
+    .chat-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-chat);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+    .chat-header-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .chat-header-info { flex: 1; }
+    .chat-header-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .chat-header-status {
+      font-size: 13px;
+      color: var(--accent);
+    }
+    .chat-header-status.typing {
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    .restart-btn {
+      background: var(--restart-btn);
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .restart-btn:hover { background: #3a4952; color: var(--text-main); }
+
+    /* Messages */
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      /* WhatsApp-style wallpaper */
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .messages-area::-webkit-scrollbar { width: 6px; }
+    .messages-area::-webkit-scrollbar-track { background: transparent; }
+    .messages-area::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+    /* Date separator */
+    .date-separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0;
+    }
+    .date-separator span {
+      background: #182229cc;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 8px;
+    }
+
+    /* Bubble row */
+    .bubble-row {
+      display: flex;
+      margin: 1px 0;
+    }
+    .bubble-row.incoming { justify-content: flex-start; }
+    .bubble-row.outgoing { justify-content: flex-end; }
+
+    /* Bubble */
+    .bubble {
+      max-width: 65%;
+      padding: 6px 10px 8px;
+      border-radius: 8px;
+      font-size: 14.5px;
+      line-height: 1.5;
+      position: relative;
+      word-break: break-word;
+      animation: fadeSlideIn 0.2s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bubble.incoming {
+      background: var(--bg-bubble-in);
+      color: var(--text-main);
+      border-top-left-radius: 0;
+    }
+    .bubble.outgoing {
+      background: var(--bg-bubble-out);
+      color: var(--text-main);
+      border-top-right-radius: 0;
+    }
+    .bubble-time {
+      font-size: 11px;
+      color: var(--text-time);
+      float: right;
+      margin-left: 8px;
+      margin-top: 2px;
+      line-height: 1;
+    }
+    /* Check mark (outgoing) */
+    .bubble-check {
+      font-size: 11px;
+      color: #53bdeb;
+      margin-left: 2px;
+    }
+
+    /* Image bubble */
+    .bubble-img {
+      max-width: 260px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      animation: fadeSlideIn 0.2s ease;
+    }
+    .bubble-img img {
+      width: 100%;
+      display: block;
+    }
+
+    /* CTA bubble */
+    .cta-bubble {
+      background: var(--bg-bubble-in);
+      border-radius: 8px;
+      border-top-left-radius: 0;
+      overflow: hidden;
+      max-width: 65%;
+      animation: fadeSlideIn 0.2s ease;
+    }
+    .cta-bubble-text {
+      padding: 8px 12px 6px;
+      font-size: 14.5px;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .cta-bubble-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: var(--cta-btn);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .cta-bubble-btn:hover { background: var(--cta-hover); }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 12px;
+      background: var(--bg-typing);
+      border-radius: 8px;
+      border-top-left-radius: 0;
+      width: fit-content;
+      animation: fadeSlideIn 0.15s ease;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.15s; }
+    .dot:nth-child(3) { animation-delay: 0.30s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%            { transform: translateY(-6px); }
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 10px 12px;
+      background: var(--bg-input);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .input-field {
+      flex: 1;
+      background: #2a3942;
+      border: none;
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 15px;
+      padding: 10px 14px;
+      resize: none;
+      min-height: 42px;
+      max-height: 120px;
+      line-height: 1.4;
+      outline: none;
+      font-family: inherit;
+    }
+    .input-field::placeholder { color: var(--text-muted); }
+    .input-field::-webkit-scrollbar { width: 4px; }
+    .input-field::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+    .send-btn {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--send-btn);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .send-btn:hover { background: #019975; }
+    .send-btn:active { transform: scale(0.93); }
+    .send-btn:disabled { background: #3a4952; cursor: not-allowed; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .bubble, .cta-bubble { max-width: 82%; }
+      .bubble-img { max-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Config deve ser carregado antes do app -->
+<script src="config.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+const fmt = (text, name) => text.replace(/\{name\}/g, name || "você");
+
+const timeNow = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+const isPositive = (text) => {
+  const t = text.toLowerCase().trim();
+  return CONFIG.positiveKeywords.some((kw) => t.includes(kw));
+};
+
+const isHesitation = (text) => {
+  const t = text.toLowerCase().trim();
+  return CONFIG.hesitationKeywords.some((kw) => t.includes(kw));
+};
+
+const STORAGE_KEY = "julia_chat_v1";
+
+const loadState = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+};
+
+const saveState = (messages, stage, name) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, stage, name }));
+  } catch {}
+};
+
+const clearState = () => {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+};
+
+/* ══════════════════════════════════════════════════════════════
+   TYPING INDICATOR
+═══════════════════════════════════════════════════════════════ */
+const TypingIndicator = () => (
+  <div className="bubble-row incoming">
+    <div className="typing-indicator">
+      <div className="dot" />
+      <div className="dot" />
+      <div className="dot" />
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   BUBBLE COMPONENTS
+═══════════════════════════════════════════════════════════════ */
+const TextBubble = ({ msg }) => (
+  <div className={`bubble-row ${msg.from === "julia" ? "incoming" : "outgoing"}`}>
+    <div className={`bubble ${msg.from === "julia" ? "incoming" : "outgoing"}`}>
+      {msg.text}
+      <span className="bubble-time">
+        {msg.time}
+        {msg.from === "user" && <span className="bubble-check"> ✓✓</span>}
+      </span>
+    </div>
+  </div>
+);
+
+const ImageBubble = ({ src }) => (
+  <div className="bubble-row incoming">
+    <div className="bubble-img">
+      <img src={src} alt="Imagem enviada por Júlia" />
+    </div>
+  </div>
+);
+
+const CtaBubble = ({ text, btnText, link }) => (
+  <div className="bubble-row incoming">
+    <div className="cta-bubble">
+      <div className="cta-bubble-text">{text}</div>
+      <a className="cta-bubble-btn" href={link} target="_blank" rel="noopener noreferrer">
+        {btnText}
+      </a>
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════════════════════ */
+function App() {
+  const saved = loadState();
+
+  const [messages, setMessages]   = useState(saved?.messages || []);
+  const [stage, setStage]         = useState(saved?.stage ?? -1);  // -1 = not started
+  const [userName, setUserName]   = useState(saved?.name || "");
+  const [isTyping, setIsTyping]   = useState(false);
+  const [inputVal, setInputVal]   = useState("");
+  const [inputLocked, setInputLocked] = useState(false);
+  const [headerStatus, setHeaderStatus] = useState("online");
+
+  const messagesEndRef  = useRef(null);
+  const inputRef        = useRef(null);
+  const reactivationRef = useRef(null);
+  const stageRef        = useRef(stage);
+  const nameRef         = useRef(userName);
+
+  // Keep refs in sync
+  useEffect(() => { stageRef.current = stage; }, [stage]);
+  useEffect(() => { nameRef.current = userName; }, [userName]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  // Persist to localStorage
+  useEffect(() => {
+    if (messages.length > 0) saveState(messages, stage, userName);
+  }, [messages, stage, userName]);
+
+  /* ── Reactivation timer ── */
+  const resetReactivation = useCallback(() => {
+    if (reactivationRef.current) clearTimeout(reactivationRef.current);
+    reactivationRef.current = setTimeout(() => {
+      const s = stageRef.current;
+      if (s >= 0 && s < 9) {
+        const pair = pick(CONFIG.reactivationMessages);
+        juliaSaysPair(
+          fmt(pair[0], nameRef.current),
+          pair[1] ? fmt(pair[1], nameRef.current) : null
+        );
+      }
+    }, CONFIG.reactivationDelay);
+  }, []);
+
+  /* ── Julia sends a sequence of messages ── */
+  const juliaSends = useCallback(async (lines) => {
+    setInputLocked(true);
+    for (let i = 0; i < lines.length; i++) {
+      if (i > 0) await sleep(CONFIG.betweenDelay);
+
+      setHeaderStatus("digitando...");
+      setIsTyping(true);
+      await sleep(CONFIG.typingDelay);
+      setIsTyping(false);
+      setHeaderStatus("online");
+
+      const line = lines[i];
+
+      if (line.type === "image") {
+        addMessage({ type: "image", src: CONFIG.hookImage });
+      } else if (line.type === "cta") {
+        addMessage({ type: "cta", text: line.text, btnText: CONFIG.ctaButtonText, link: CONFIG.ctaLink });
+      } else {
+        addMessage({ from: "julia", text: line, time: timeNow(), type: "text" });
+      }
+    }
+    setInputLocked(false);
+    inputRef.current?.focus();
+  }, []);
+
+  const juliaSaysPair = useCallback((line1, line2) => {
+    const lines = [line1];
+    if (line2) lines.push(line2);
+    juliaSends(lines);
+  }, [juliaSends]);
+
+  /* ── Add a message to the list ── */
+  const addMessage = useCallback((msg) => {
+    setMessages((prev) => [...prev, msg]);
+  }, []);
+
+  /* ── Start the funnel ── */
+  const startFunnel = useCallback(async () => {
+    if (stageRef.current !== -1) return;
+    setStage(0);
+    const pair = pick(CONFIG.funnel.stage0);
+    await juliaSends(pair);
+  }, [juliaSends]);
+
+  /* ── Initial load ── */
+  useEffect(() => {
+    if (stage === -1) {
+      setTimeout(() => startFunnel(), 800);
+    }
+    resetReactivation();
+    return () => {
+      if (reactivationRef.current) clearTimeout(reactivationRef.current);
+    };
+  }, []);
+
+  /* ── Handle user message ── */
+  const handleUserSend = useCallback(async (text) => {
+    if (!text.trim() || inputLocked) return;
+
+    // Add user bubble
+    addMessage({ from: "user", text: text.trim(), time: timeNow(), type: "text" });
+    setInputVal("");
+    resetReactivation();
+
+    const s = stageRef.current;
+    const name = nameRef.current;
+
+    // ── Stage 0: capture name ──────────────────────────────────────
+    if (s === 0) {
+      const receivedName = text.trim().split(" ")[0];
+      const capitalized = receivedName.charAt(0).toUpperCase() + receivedName.slice(1).toLowerCase();
+      setUserName(capitalized);
+      nameRef.current = capitalized;
+      setStage(1);
+
+      const pair = pick(CONFIG.funnel.stage1);
+      await juliaSends([
+        fmt(pair[0], capitalized),
+        ...(pair[1] ? [fmt(pair[1], capitalized)] : []),
+      ]);
+      return;
+    }
+
+    // ── Stage 1: any response → connection + gancho ───────────────
+    if (s === 1) {
+      setStage(2);
+      const p2 = pick(CONFIG.funnel.stage2);
+      const p3 = pick(CONFIG.funnel.stage3);
+      await juliaSends([
+        fmt(p2[0], name),
+        ...(p2[1] ? [fmt(p2[1], name)] : []),
+      ]);
+      await sleep(500);
+      await juliaSends([
+        fmt(p3[0], name),
+        ...(p3[1] ? [fmt(p3[1], name)] : []),
+      ]);
+      setStage(3);
+      return;
+    }
+
+    // ── Stage 3: waiting for permission to send image ─────────────
+    if (s === 3) {
+      if (isHesitation(text)) {
+        const hr = pick(CONFIG.hesitationResponses);
+        await juliaSends([fmt(hr[0], name), ...(hr[1] ? [fmt(hr[1], name)] : [])]);
+        return;
+      }
+      // Positive or ambiguous → send image
+      setStage(4);
+      const p4 = pick(CONFIG.funnel.stage4);
+      await juliaSends([{ type: "image" }]);
+      await sleep(400);
+      await juliaSends([
+        fmt(p4[0], name),
+        ...(p4[1] ? [fmt(p4[1], name)] : []),
+      ]);
+      await sleep(500);
+      const p5 = pick(CONFIG.funnel.stage5);
+      await juliaSends([fmt(p5[0], name), ...(p5[1] ? [fmt(p5[1], name)] : [])]);
+      setStage(5);
+      return;
+    }
+
+    // ── Stage 5: escalada → desejo → convite ──────────────────────
+    if (s === 5) {
+      setStage(6);
+      const p6 = pick(CONFIG.funnel.stage6);
+      await juliaSends([fmt(p6[0], name), ...(p6[1] ? [fmt(p6[1], name)] : [])]);
+      await sleep(400);
+      const p7 = pick(CONFIG.funnel.stage7);
+      await juliaSends([fmt(p7[0], name), ...(p7[1] ? [fmt(p7[1], name)] : [])]);
+      setStage(7);
+      return;
+    }
+
+    // ── Stage 7: waiting for final confirmation ───────────────────
+    if (s === 7) {
+      if (isHesitation(text)) {
+        const hr = pick(CONFIG.hesitationResponses);
+        await juliaSends([fmt(hr[0], name), ...(hr[1] ? [fmt(hr[1], name)] : [])]);
+        return;
+      }
+      setStage(8);
+      const p8 = pick(CONFIG.funnel.stage8);
+      // Send CTA as special bubble
+      const ctaText = p8.join("\n");
+      await juliaSends([{ type: "cta", text: fmt(ctaText, name) }]);
+      await sleep(600);
+      const p9 = pick(CONFIG.funnel.stage9);
+      await juliaSends([fmt(p9[0], name), ...(p9[1] ? [fmt(p9[1], name)] : [])]);
+      setStage(9);
+      return;
+    }
+
+    // ── Stage 9+: funnel done, reinforce CTA ─────────────────────
+    if (s >= 9) {
+      await juliaSends([
+        `Não perde tempo não, ${name} 😅`,
+        `O link tá lá te esperando 👇`,
+      ]);
+      return;
+    }
+
+    // ── Default: redirect ─────────────────────────────────────────
+    const rr = pick(CONFIG.redirectResponses);
+    await juliaSends([fmt(rr[0], name), ...(rr[1] ? [fmt(rr[1], name)] : [])]);
+  }, [inputLocked, addMessage, juliaSends, resetReactivation]);
+
+  /* ── Restart ── */
+  const handleRestart = useCallback(() => {
+    clearState();
+    setMessages([]);
+    setStage(-1);
+    setUserName("");
+    setInputVal("");
+    stageRef.current = -1;
+    nameRef.current = "";
+    if (reactivationRef.current) clearTimeout(reactivationRef.current);
+    setTimeout(() => startFunnel(), 800);
+  }, [startFunnel]);
+
+  /* ── Keyboard send ── */
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleUserSend(inputVal);
+    }
+  };
+
+  /* ── Auto-resize textarea ── */
+  const handleInputChange = (e) => {
+    setInputVal(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  };
+
+  /* ── Render messages ── */
+  const renderMessage = (msg, idx) => {
+    if (msg.type === "image") return <ImageBubble key={idx} src={CONFIG.hookImage} />;
+    if (msg.type === "cta")   return <CtaBubble key={idx} text={msg.text} btnText={msg.btnText || CONFIG.ctaButtonText} link={msg.link || CONFIG.ctaLink} />;
+    return <TextBubble key={idx} msg={msg} />;
+  };
+
+  /* ── Today label ── */
+  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+  return (
+    <div className="app-shell">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img
+            className="sidebar-avatar"
+            src={CONFIG.atendenteAvatar}
+            alt={CONFIG.atendenteName}
+          />
+          <span className="sidebar-title">{CONFIG.atendenteName}</span>
+        </div>
+        <div className="sidebar-body">
+          Selecione um chat<br />para começar a conversar
+        </div>
+      </aside>
+
+      {/* Chat pane */}
+      <main className="chat-pane">
+        {/* Header */}
+        <div className="chat-header">
+          <img
+            className="chat-header-avatar"
+            src={CONFIG.atendenteAvatar}
+            alt={CONFIG.atendenteName}
+          />
+          <div className="chat-header-info">
+            <div className="chat-header-name">{CONFIG.atendenteName}</div>
+            <div className={`chat-header-status ${isTyping ? "typing" : ""}`}>
+              {isTyping ? "digitando..." : headerStatus}
+            </div>
+          </div>
+          <button className="restart-btn" onClick={handleRestart} title="Reiniciar conversa">
+            ↺ reiniciar
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="messages-area">
+          <div className="date-separator">
+            <span>Hoje — {today}</span>
+          </div>
+
+          {messages.map((msg, idx) => renderMessage(msg, idx))}
+
+          {isTyping && <TypingIndicator />}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="input-area">
+          <textarea
+            ref={inputRef}
+            className="input-field"
+            placeholder="Digite uma mensagem"
+            value={inputVal}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            disabled={inputLocked}
+          />
+          <button
+            className="send-btn"
+            onClick={() => handleUserSend(inputVal)}
+            disabled={inputLocked || !inputVal.trim()}
+            aria-label="Enviar"
+          >
+            ➤
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/* ── sleep util ── */
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/* ── Mount ── */
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
