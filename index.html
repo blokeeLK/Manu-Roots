@@ -69,82 +69,147 @@ var CONFIG = {
   ctaLink: "https://SEU_LINK_AQUI.com",
   ctaBtn: "LIBERAR MEU ACESSO AGORA",
   typingDelayMin: 2500,
-  typingDelayMax: 6000,
-  betweenMessagesDelay: 1800,
+  typingDelayMax: 6500,
+  betweenMessagesDelay: 1600,
   reactivationDelay: 300000,
+  maxReactivations: 2,
   funnel: {
-    s0:[["Oi... vi que voce entrou aqui agora","Fiquei curiosa... como voce se chama?"]],
-    s1:[["Prazer, {n}... gostei de voce ter aparecido aqui","Voce chegou aqui por acaso... ou ja tava curioso mesmo?"],
-        ["Ah, {n}... que nome bom","Mas me conta... voce veio aqui por acaso ou ja tava me procurando?"]],
-    s2:[["Confesso que nem todo mundo que entra aqui eu respondo assim...","Mas voce parece diferente"],
-        ["Olha... eu nao faco isso com qualquer um nao...","Mas voce me pareceu diferente"]],
-    s3:[["Posso te mostrar uma coisinha que eu fiz hoje...","Mas to com um pouquinho de vergonha"],
-        ["Tem uma coisa que eu fiz hoje que poucas pessoas viram...","Posso te mostrar? To meio com vergonha"]],
-    s4:[["Nao ri de mim ta... eu quase nao mostro isso assim"],
-        ["Pode falar... o que achou? Eu confiei em voce"]],
-    s5:[["Isso ai e so uma parte...","Tem coisas que eu nao deixo abertas desse jeito..."],
-        ["Isso foi so um pedacinho...","O que ta guardado e bem melhor"]],
-    s6:[["Tem gente que entra so por curiosidade...","Mas quando ve tudo... nao sai mais"],
-        ["Sabe aquela coisa que voce nao consegue parar de ver?","E mais ou menos isso..."]],
-    s7:[["Se eu te mostrar o resto... voce aguenta?"],
-        ["Acha que consegue ver tudo sem travar?"]],
-    s8:[["Entao nao fica so olhando daqui...","Entra la e ve tudo sem filtro"],
-        ["Vai la entao... ta tudo te esperando"]],
-    s9:[["Eu deixei liberado por um valor bem baixo hoje...","Mas nao sei ate quando isso vai ficar assim"],
-        ["Ta com um precinho especial agora...","Depois nao sei se vai continuar assim"]]
+    s0:[
+      ["Oi... vi que voce entrou aqui agora","Fiquei curiosa... como voce se chama, meu bem?"],
+      ["Oi... voce apareceu aqui do nada","Como voce se chama? fiquei curiosa"],
+      ["Hmm... alguem entrou aqui agora","Me fala seu nome... quero saber"]
+    ],
+    s1:[
+      ["Ahh, {n}... gostei do seu nome","Tem um jeitinho diferente..."],
+      ["{n}... nome bonito viu","Nao sei... combinou com voce"],
+      ["Hmm, {n}... gostei","Voce parece interessante..."]
+    ],
+    s2:[
+      ["Me conta... voce caiu aqui por acaso ou ja tava curioso mesmo?"],
+      ["Voce entrou aqui sem querer... ou ja tava querendo ver?"],
+      ["Confessa... voce ja tava curioso antes de entrar ne?"]
+    ],
+    s3:[
+      ["Hmm... gostei disso","Voce fala de um jeito diferente..."],
+      ["Sabia... deu pra perceber","Voce nao parece qualquer um..."],
+      ["Tem algo no seu jeito...","Nao sei explicar direito"]
+    ],
+    s4:[
+      ["Sabe quando alguem chama atencao sem fazer esforco?","Entao..."],
+      ["Voce meio que me deixou curiosa agora"],
+      ["Nao e todo mundo que prende minha atencao assim"]
+    ],
+    s5:[
+      ["Fiquei com vontade de te mostrar uma coisa...","Mas to meio na duvida ainda"],
+      ["Tem uma coisinha aqui...","Mas nao sei se voce ta pronto pra ver"],
+      ["Eu fiz uma coisa hoje...","E fiquei meio assim de mostrar"]
+    ],
+    s6:[
+      ["Se eu te mostrar... voce promete nao me julgar?"],
+      ["Se eu te mostrar... voce nao vai sair correndo ne?"],
+      ["Mas so te mostro se voce prometer que vai ficar"]
+    ],
+    s7:[
+      ["Nao ri de mim ta... eu quase nao mostro isso assim"],
+      ["Eu fiquei com vergonha de mandar isso"],
+      ["Agora voce entende porque eu pensei duas vezes ne..."]
+    ],
+    s8:[
+      ["Isso ai e so uma parte...","Tem coisa que eu nao deixo assim aberto"],
+      ["Voce viu so um pedacinho...","Tem bem mais que isso"],
+      ["Nem chegou perto do que eu guardo aqui..."]
+    ],
+    s9:[
+      ["Tem gente que entra so por curiosidade...","Mas depois nao consegue sair"],
+      ["Quem entra... acaba ficando mais do que esperava"],
+      ["Eu aviso... voce pode acabar querendo ver tudo"]
+    ],
+    s10:[
+      ["Se eu te mostrar o resto... voce aguenta?"],
+      ["Quer ver de verdade agora... ou vai ficar so imaginando?"],
+      ["Voce e curioso o suficiente pra entrar?"]
+    ],
+    s11:[
+      ["Entao nao fica so aqui comigo...","Entra la e me ve de verdade"],
+      ["Se voce chegou ate aqui...","Acho que merece ver tudo"],
+      ["Vai la... depois voce me conta o que achou"]
+    ],
+    s12:[
+      ["Eu deixei liberado por um valor bem baixinho hoje...","Mas posso fechar isso a qualquer momento"],
+      ["Isso aqui nao fica aberto sempre...","Entao aproveita"],
+      ["Depois pode nao estar mais disponivel..."]
+    ]
   },
-  redirect:[["Depois eu te conto isso","Primeiro quero te mostrar uma coisa..."],
-            ["Boa pergunta... mas depois","Tem uma coisa aqui que voce precisa ver antes..."],
-            ["Isso eu respondo depois...","Mas antes... deixa eu te mostrar uma coisa"]],
-  hesitation:[["Relaxa... entra sem compromisso","Eu so queria te mostrar porque acho que voce vai gostar"],
-              ["Nao precisa ter medo nao...","Entra so pra dar uma olhada... depois voce me conta"]],
-  negative:[["Ta bom... eu nao ia te mostrar mesmo","Mas acho que voce ia se surpreender..."],
-            ["Relaxa... eu entendo","Mas tem uma parte que eu quase nao mostro..."],
-            ["Ok... respeito","Mas so vou deixar aqui que muita gente falou que valeu..."]],
-  reactivation:[["Sumiu, {n}?","Eu ia te mostrar uma coisa melhor ainda..."],
-                ["Oi {n}... ainda ta ai?","Nao vai perder o que eu ia te mostrar..."]],
-  pos:["sim","claro","pode","vai","quero","manda","mostra","bora","vamos","to","logico","ok","okay","s","ss","sss","kkk","rs","haha","yeah","yep","yes","boa","massa","show","top","beleza","aguento","consigo","vou","entre","ta","certeza","pfv","plz","quero ver","pode sim","com certeza"],
-  hes:["nao sei","talvez","depende","sei la","hm","hmm","acho que","sera","perigoso","caro","quanto","dinheiro","vou pensar","nao agora","espera"],
-  neg:["nao","nao quero","agora nao","sai fora","para","nada","nem","jamais","nunca","nope","nop","n","nn","nao quero ver"]
+  negative:[
+    ["Ta bom... eu nao ia te mostrar mesmo","Mas acho que voce ia se surpreender..."],
+    ["Relaxa... eu entendo","So fiquei com vontade de te mostrar porque voce pareceu diferente..."],
+    ["Tudo bem... nao vou forcar","Mas confesso que acho que voce ia gostar..."]
+  ],
+  hesitation:[
+    ["Relaxa... sem pressao nenhuma","Eu so queria te mostrar porque voce me chamou atencao..."],
+    ["Calma, meu bem... nao precisa decidir correndo","So da uma olhadinha primeiro..."],
+    ["Eu entendo...","Mas as vezes a curiosidade fala mais alto"]
+  ],
+  redirect:[
+    ["Depois eu te conto isso","Primeiro quero te mostrar uma coisa..."],
+    ["Voce e curioso mesmo ne","Mas deixa eu terminar uma coisa primeiro..."],
+    ["Calma... uma coisa de cada vez","Eu tava chegando numa parte boa..."]
+  ],
+  reactivation:[
+    ["Sumiu, {n}?","Eu ia te mostrar uma coisa melhor ainda..."],
+    ["Ei... voce ainda ta ai?","Nao some justo agora..."],
+    ["{n}... voce me deixou falando sozinha?","Volta aqui rapidinho..."]
+  ],
+  pos:["sim","quero","pode","claro","manda","ok","bora","uhum","pode sim","quero ver",
+       "mostra","manda ai","manda sim","vamos","to dentro","logico","okay","s","ss","sss",
+       "kkk","rs","haha","yeah","yep","yes","boa","massa","show","top","beleza","aguento",
+       "consigo","vou","ta","certeza","pfv","plz","com certeza","vai","vou sim","manda logo"],
+  neg:["nao","n","nao quero","agora nao","depois","sai fora","melhor nao","nao precisa",
+       "nao to","nem","nunca","jamais","nope","nop","nn","nao quero ver","nao obrigado"],
+  hes:["nao sei","talvez","vou pensar","depois vejo","caro","tenho duvida","to pensando",
+       "calma","pera","espera","depende","sei la","hm","hmm","acho que","sera","quanto",
+       "dinheiro","nao agora"]
 };
 </script>
 <script type="text/babel">
 var useState=React.useState,useEffect=React.useEffect,useRef=React.useRef,useCallback=React.useCallback;
 
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms)});}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function randDelay(){var mn=CONFIG.typingDelayMin,mx=CONFIG.typingDelayMax;return mn+Math.random()*(mx-mn);}
-function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function fmt(t,n){return t.replace(/\{n\}/g,n||"voce");}
 function tnow(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 
-function isPos(t){
-  var s=t.toLowerCase().trim();
-  return CONFIG.pos.some(function(k){return s===k||s.startsWith(k+" ");});
+function detectIntent(text){
+  var s=text.toLowerCase().trim();
+  if(CONFIG.neg.some(function(k){return s===k||s.startsWith(k+" ")||s.endsWith(" "+k);})) return "neg";
+  if(CONFIG.hes.some(function(k){return s.includes(k);})) return "hes";
+  if(CONFIG.pos.some(function(k){return s===k||s.startsWith(k+" ")||s.includes(k);})) return "pos";
+  return "redirect";
 }
-function isHes(t){
-  var s=t.toLowerCase().trim();
-  return CONFIG.hes.some(function(k){return s.includes(k);});
-}
-function isNeg(t){
-  var s=t.toLowerCase().trim();
-  return CONFIG.neg.some(function(k){return s===k||s.startsWith(k+" ");});
-}
+
 function extractName(t){
-  var pfx=[/^pode me chamar de\s+/i,/^me chama de\s+/i,/^me chamo\s+/i,
-           /^meu nome\s+eh\s+/i,/^meu nome\s+e\s+/i,/^eu sou\s+/i,/^sou\s+/i];
+  var pfx=[/^pode me chamar de\s+/i,/^chama eu de\s+/i,/^me chama de\s+/i,
+           /^me chamo\s+/i,/^meu nome e\s+/i,/^meu nome eh\s+/i,
+           /^eu sou\s+/i,/^sou\s+/i];
   var c=t.trim();
   for(var i=0;i<pfx.length;i++){var r=c.replace(pfx[i],"");if(r!==c){c=r;break;}}
   var f=c.trim().split(/\s+/)[0];
+  if(!f||f.length===0) return t.trim().split(/\s+/)[0];
   return f.charAt(0).toUpperCase()+f.slice(1).toLowerCase();
 }
 
-var SKEY="julia_v4";
-function load(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);}catch(e){}return null;}
-function save(m,s,n){try{localStorage.setItem(SKEY,JSON.stringify({messages:m,stage:s,name:n}));}catch(e){}}
-function clear(){try{localStorage.removeItem(SKEY);}catch(e){}}
+var SKEY="julia_v5";
+function loadState(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);}catch(e){}return null;}
+function saveState(m,s,n,rc){try{localStorage.setItem(SKEY,JSON.stringify({messages:m,stage:s,name:n,reactivations:rc||0}));}catch(e){}}
 
-function Dots(){return React.createElement("div",{className:"row in"},React.createElement("div",{className:"typ"},React.createElement("div",{className:"dot"}),React.createElement("div",{className:"dot"}),React.createElement("div",{className:"dot"})));}
-
+function Dots(){
+  return React.createElement("div",{className:"row in"},
+    React.createElement("div",{className:"typ"},
+      React.createElement("div",{className:"dot"}),
+      React.createElement("div",{className:"dot"}),
+      React.createElement("div",{className:"dot"})));
+}
 function Bubble(p){
   var m=p.msg,dir=m.from==="julia"?"in":"out";
   return React.createElement("div",{className:"row "+dir},
@@ -152,7 +217,10 @@ function Bubble(p){
       React.createElement("span",{className:"btime"},m.time,
         m.from==="user"&&React.createElement("span",{className:"bchk"}," vv"))));
 }
-function Img(){return React.createElement("div",{className:"row in"},React.createElement("div",{className:"bimg"},React.createElement("img",{src:CONFIG.hookImage,alt:""})));}
+function Img(){
+  return React.createElement("div",{className:"row in"},
+    React.createElement("div",{className:"bimg"},React.createElement("img",{src:CONFIG.hookImage,alt:""})));
+}
 function Cta(p){
   return React.createElement("div",{className:"row in"},
     React.createElement("div",{className:"ctab"},
@@ -161,7 +229,7 @@ function Cta(p){
 }
 
 function App(){
-  var sv=load();
+  var sv=loadState();
   var _s=useState(sv?sv.stage:-1),stage=_s[0],setStage=_s[1];
   var _n=useState(sv?sv.name:""),uname=_n[0],setUname=_n[1];
   var _m=useState(sv?sv.messages:[]),msgs=_m[0],setMsgs=_m[1];
@@ -169,17 +237,20 @@ function App(){
   var _i=useState(""),inp=_i[0],setInp=_i[1];
   var _l=useState(false),locked=_l[0],setLocked=_l[1];
   var _st=useState("online"),status=_st[0],setStatus=_st[1];
+  var _rc=useState(sv?sv.reactivations||0:0),reactivations=_rc[0],setReactivations=_rc[1];
 
   var endRef=useRef(null),inpRef=useRef(null),rtRef=useRef(null);
-  var stgRef=useRef(stage),nmRef=useRef(uname);
+  var stgRef=useRef(stage),nmRef=useRef(uname),rcRef=useRef(reactivations);
+
   useEffect(function(){stgRef.current=stage;},[stage]);
   useEffect(function(){nmRef.current=uname;},[uname]);
+  useEffect(function(){rcRef.current=reactivations;},[reactivations]);
   useEffect(function(){if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
-  useEffect(function(){if(msgs.length>0)save(msgs,stage,uname);},[msgs,stage,uname]);
+  useEffect(function(){if(msgs.length>0)saveState(msgs,stage,uname,reactivations);},[msgs,stage,uname,reactivations]);
 
   var addMsg=useCallback(function(m){setMsgs(function(p){return p.concat([m]);});},[]);
 
-  var send=useCallback(function(lines){
+  var sendBot=useCallback(function(lines){
     return new Promise(function(resolve){
       setLocked(true);
       var i=0;
@@ -203,20 +274,21 @@ function App(){
   var resetRT=useCallback(function(){
     if(rtRef.current)clearTimeout(rtRef.current);
     rtRef.current=setTimeout(function(){
-      var s=stgRef.current;
-      if(s>=0&&s<9){
-        var p=pick(CONFIG.reactivation),n=nmRef.current;
-        send([fmt(p[0],n)].concat(p[1]?[fmt(p[1],n)]:[]));
+      var s=stgRef.current,rc=rcRef.current;
+      if(s>=0&&s<11&&rc<CONFIG.maxReactivations){
+        var pair=pick(CONFIG.reactivation),n=nmRef.current;
+        setReactivations(function(r){return r+1;});
+        sendBot([fmt(pair[0],n)].concat(pair[1]?[fmt(pair[1],n)]:[]));
       }
     },CONFIG.reactivationDelay);
-  },[send]);
+  },[sendBot]);
 
   var startFunnel=useCallback(function(){
     if(stgRef.current!==-1)return;
     setStage(0);
-    var p=pick(CONFIG.funnel.s0);
-    send(p);
-  },[send]);
+    var pair=pick(CONFIG.funnel.s0);
+    sendBot(pair);
+  },[sendBot]);
 
   useEffect(function(){
     if(stage===-1)setTimeout(startFunnel,800);
@@ -224,75 +296,122 @@ function App(){
     return function(){if(rtRef.current)clearTimeout(rtRef.current);};
   },[]);
 
-  var handleSend=useCallback(function(text){
-    if(!text.trim()||locked)return;
-    addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
-    setInp("");resetRT();
+  var advanceFunnel=useCallback(function(text){
     var s=stgRef.current,n=nmRef.current;
+    var intent=detectIntent(text);
 
     if(s===0){
       var nm=extractName(text);
       setUname(nm);nmRef.current=nm;setStage(1);
       var p=pick(CONFIG.funnel.s1);
-      send([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[]));
-      return;
-    }
-    if(s===1){
-      setStage(2);
-      var p2=pick(CONFIG.funnel.s2),p3=pick(CONFIG.funnel.s3);
-      send([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[])).then(function(){
+      sendBot([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[])).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
-        send([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
-        setStage(3);
+        var p2=pick(CONFIG.funnel.s2);
+        sendBot([fmt(p2[0],nm)].concat(p2[1]?[fmt(p2[1],nm)]:[]));
+        setStage(2);
       });
       return;
     }
-    if(s===3){
-      if(isNeg(text)){var nr=pick(CONFIG.negative);send([fmt(nr[0],n),fmt(nr[1],n)]);return;}
-      if(isHes(text)){var hr=pick(CONFIG.hesitation);send([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
-      if(!isPos(text)){var rr=pick(CONFIG.redirect);send([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
-      setStage(4);
-      var p4=pick(CONFIG.funnel.s4);
-      send([{type:"img"}]).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(function(){
-        return send([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
-      }).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(function(){
-        var p5=pick(CONFIG.funnel.s5);
-        send([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
-        setStage(5);
-      });
-      return;
-    }
-    if(s===5){
-      setStage(6);
-      var p6=pick(CONFIG.funnel.s6),p7=pick(CONFIG.funnel.s7);
-      send([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[])).then(function(){
+    if(s===2){
+      setStage(3);
+      var p3=pick(CONFIG.funnel.s3);
+      sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[])).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
-        send([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
-        setStage(7);
+        var p4=pick(CONFIG.funnel.s4);
+        sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
+        setStage(4);
       });
       return;
     }
-    if(s===7){
-      if(isNeg(text)){var nr2=pick(CONFIG.negative);send([fmt(nr2[0],n),fmt(nr2[1],n)]);return;}
-      if(isHes(text)){var hr2=pick(CONFIG.hesitation);send([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
-      if(!isPos(text)){var rr2=pick(CONFIG.redirect);send([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
-      setStage(8);
-      var p8=pick(CONFIG.funnel.s8);
-      send([{type:"cta",text:fmt(p8.join("\n"),n)}]).then(function(){
+    if(s===4){
+      setStage(5);
+      var p5=pick(CONFIG.funnel.s5);
+      sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[])).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
-        var p9=pick(CONFIG.funnel.s9);
-        send([fmt(p9[0],n)].concat(p9[1]?[fmt(p9[1],n)]:[]));
-        setStage(9);
+        var p6=pick(CONFIG.funnel.s6);
+        sendBot([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[]));
+        setStage(6);
       });
       return;
     }
-    if(s>=9){send(["Nao perde tempo nao, "+n,"O link ta la te esperando"]);return;}
+    if(s===6){
+      if(intent==="neg"){
+        var nr=pick(CONFIG.negative);
+        sendBot([fmt(nr[0],n)].concat(nr[1]?[fmt(nr[1],n)]:[])).then(function(){
+          return sleep(CONFIG.betweenMessagesDelay);
+        }).then(function(){
+          var p6b=pick(CONFIG.funnel.s6);
+          sendBot([fmt(p6b[0],n)].concat(p6b[1]?[fmt(p6b[1],n)]:[]));
+        });
+        return;
+      }
+      if(intent==="hes"){var hr=pick(CONFIG.hesitation);sendBot([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
+      if(intent==="redirect"){var rr=pick(CONFIG.redirect);sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
+      setStage(7);
+      var p7=pick(CONFIG.funnel.s7);
+      sendBot([{type:"img"}]).then(function(){
+        return sleep(CONFIG.betweenMessagesDelay);
+      }).then(function(){
+        return sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
+      }).then(function(){
+        return sleep(CONFIG.betweenMessagesDelay);
+      }).then(function(){
+        var p8=pick(CONFIG.funnel.s8);
+        sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
+        setStage(8);
+      });
+      return;
+    }
+    if(s===8){
+      setStage(9);
+      var p9=pick(CONFIG.funnel.s9);
+      sendBot([fmt(p9[0],n)].concat(p9[1]?[fmt(p9[1],n)]:[])).then(function(){
+        return sleep(CONFIG.betweenMessagesDelay);
+      }).then(function(){
+        var p10=pick(CONFIG.funnel.s10);
+        sendBot([fmt(p10[0],n)].concat(p10[1]?[fmt(p10[1],n)]:[]));
+        setStage(10);
+      });
+      return;
+    }
+    if(s===10){
+      if(intent==="neg"){
+        var nr2=pick(CONFIG.negative);
+        sendBot([fmt(nr2[0],n)].concat(nr2[1]?[fmt(nr2[1],n)]:[])).then(function(){
+          return sleep(CONFIG.betweenMessagesDelay);
+        }).then(function(){
+          var p10b=pick(CONFIG.funnel.s10);
+          sendBot([fmt(p10b[0],n)].concat(p10b[1]?[fmt(p10b[1],n)]:[]));
+        });
+        return;
+      }
+      if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
+      if(intent==="redirect"){var rr2=pick(CONFIG.redirect);sendBot([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
+      setStage(11);
+      var p11=pick(CONFIG.funnel.s11);
+      sendBot([{type:"cta",text:fmt(p11.join("\n"),n)}]).then(function(){
+        return sleep(CONFIG.betweenMessagesDelay);
+      }).then(function(){
+        var p12=pick(CONFIG.funnel.s12);
+        sendBot([fmt(p12[0],n)].concat(p12[1]?[fmt(p12[1],n)]:[]));
+        setStage(12);
+      });
+      return;
+    }
+    if(s>=12){sendBot(["Nao perde tempo nao, "+n,"O link ta la te esperando"]);return;}
     var rr3=pick(CONFIG.redirect);
-    send([fmt(rr3[0],n)].concat(rr3[1]?[fmt(rr3[1],n)]:[]));
-  },[locked,addMsg,send,resetRT]);
+    sendBot([fmt(rr3[0],n)].concat(rr3[1]?[fmt(rr3[1],n)]:[]));
+  },[sendBot]);
+
+  var handleSend=useCallback(function(text){
+    if(!text.trim()||locked)return;
+    addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
+    setInp("");resetRT();
+    advanceFunnel(text);
+  },[locked,addMsg,advanceFunnel,resetRT]);
 
   function renderMsg(m,i){
     if(m.type==="img") return React.createElement(Img,{key:i});
@@ -314,10 +433,16 @@ function App(){
       typing&&React.createElement(Dots,null),
       React.createElement("div",{ref:endRef})),
     React.createElement("div",{className:"inp-area"},
-      React.createElement("textarea",{ref:inpRef,className:"inp",placeholder:"Digite uma mensagem",value:inp,rows:1,disabled:locked,
+      React.createElement("textarea",{
+        ref:inpRef,className:"inp",placeholder:"Digite uma mensagem",
+        value:inp,rows:1,disabled:locked,
         onChange:function(e){setInp(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";},
-        onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(inp);}}}),
-      React.createElement("button",{className:"sbtn",disabled:locked||!inp.trim(),onClick:function(){handleSend(inp);}},">")));
+        onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(inp);}}
+      }),
+      React.createElement("button",{
+        className:"sbtn",disabled:locked||!inp.trim(),
+        onClick:function(){handleSend(inp);}
+      },">>")));
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
