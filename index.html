@@ -1,576 +1,346 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat - Julia</title>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg-app: #111b21;
-      --bg-sidebar: #202c33;
-      --bg-chat: #0b141a;
-      --bg-header: #202c33;
-      --bg-input: #202c33;
-      --bg-bubble-in: #202c33;
-      --bg-bubble-out: #005c4b;
-      --text-main: #e9edef;
-      --text-muted: #8696a0;
-      --text-time: #667781;
-      --accent: #00a884;
-      --border: #2a3942;
-      --cta-btn: #25d366;
-      --cta-hover: #1da851;
-    }
-    html, body, #root { height: 100%; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg-app); color: var(--text-main); overflow: hidden; }
-    .app-shell { display: flex; height: 100vh; max-width: 1400px; margin: 0 auto; }
-    .sidebar { width: 360px; min-width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-    .sidebar-header { padding: 12px 16px; display: flex; align-items: center; gap: 14px; background: var(--bg-header); }
-    .sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .sidebar-title { font-size: 17px; font-weight: 600; color: var(--text-main); }
-    .sidebar-body { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px; text-align: center; padding: 24px; line-height: 1.6; }
-    .chat-pane { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); overflow: hidden; }
-    .chat-header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--bg-header); border-bottom: 1px solid var(--border); }
-    .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-    .chat-header-info { flex: 1; }
-    .chat-header-name { font-size: 16px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
-    .chat-header-status { font-size: 13px; color: var(--accent); }
-    .chat-header-status.typing { animation: blink 1.2s ease-in-out infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .restart-btn { background: #2a3942; border: none; color: var(--text-muted); font-size: 11px; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
-    .restart-btn:hover { background: #3a4952; color: var(--text-main); }
-    .messages-area { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 4px; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-    .messages-area::-webkit-scrollbar { width: 6px; }
-    .messages-area::-webkit-scrollbar-thumb { background: #2a3942; border-radius: 3px; }
-    .date-separator { display: flex; align-items: center; justify-content: center; margin: 8px 0; }
-    .date-separator span { background: #182229cc; color: var(--text-muted); font-size: 12px; padding: 3px 10px; border-radius: 8px; }
-    .bubble-row { display: flex; margin: 1px 0; }
-    .bubble-row.incoming { justify-content: flex-start; }
-    .bubble-row.outgoing { justify-content: flex-end; }
-    .bubble { max-width: 65%; padding: 6px 10px 8px; border-radius: 8px; font-size: 14.5px; line-height: 1.5; position: relative; word-break: break-word; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .bubble.incoming { background: var(--bg-bubble-in); color: var(--text-main); border-top-left-radius: 0; }
-    .bubble.outgoing { background: var(--bg-bubble-out); color: var(--text-main); border-top-right-radius: 0; }
-    .bubble-time { font-size: 11px; color: var(--text-time); float: right; margin-left: 8px; margin-top: 2px; line-height: 1; }
-    .bubble-check { font-size: 11px; color: #53bdeb; margin-left: 2px; }
-    .bubble-img { max-width: 260px; border-radius: 8px; overflow: hidden; animation: fadeIn 0.2s ease; }
-    .bubble-img img { width: 100%; display: block; }
-    .cta-bubble { background: var(--bg-bubble-in); border-radius: 8px; border-top-left-radius: 0; overflow: hidden; max-width: 65%; animation: fadeIn 0.2s ease; }
-    .cta-bubble-text { padding: 8px 12px 6px; font-size: 14.5px; color: var(--text-main); line-height: 1.5; white-space: pre-line; }
-    .cta-bubble-btn { display: block; width: 100%; padding: 12px; background: var(--cta-btn); color: #fff; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; border: none; cursor: pointer; transition: background 0.2s; }
-    .cta-bubble-btn:hover { background: var(--cta-hover); }
-    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 12px; background: var(--bg-bubble-in); border-radius: 8px; border-top-left-radius: 0; width: fit-content; animation: fadeIn 0.15s ease; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: bounce 1.2s ease-in-out infinite; }
-    .dot:nth-child(2) { animation-delay: 0.15s; }
-    .dot:nth-child(3) { animation-delay: 0.30s; }
-    @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-    .input-area { padding: 10px 12px; background: var(--bg-input); border-top: 1px solid var(--border); display: flex; align-items: flex-end; gap: 10px; }
-    .input-field { flex: 1; background: #2a3942; border: none; border-radius: 8px; color: var(--text-main); font-size: 15px; padding: 10px 14px; resize: none; min-height: 42px; max-height: 120px; line-height: 1.4; outline: none; font-family: inherit; }
-    .input-field::placeholder { color: var(--text-muted); }
-    .send-btn { width: 42px; height: 42px; border-radius: 50%; background: #00a884; border: none; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s, transform 0.1s; }
-    .send-btn:hover { background: #019975; }
-    .send-btn:active { transform: scale(0.93); }
-    .send-btn:disabled { background: #3a4952; cursor: not-allowed; }
-    @media (max-width: 768px) { .sidebar { display: none; } .bubble, .cta-bubble { max-width: 82%; } .bubble-img { max-width: 220px; } }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chat - Julia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-app:#111b21;--bg-side:#202c33;--bg-chat:#0b141a;--bg-head:#202c33;
+  --bg-in:#202c33;--bg-out:#005c4b;--txt:#e9edef;--muted:#8696a0;
+  --time:#667781;--accent:#00a884;--border:#2a3942;--cta:#25d366;--ctah:#1da851;
+}
+html,body,#root{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg-app);color:var(--txt);overflow:hidden}
+.shell{display:flex;height:100vh;max-width:1400px;margin:0 auto}
+.side{width:360px;min-width:260px;background:var(--bg-side);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.side-head{padding:12px 16px;display:flex;align-items:center;gap:14px;background:var(--bg-head)}
+.side-av{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.side-title{font-size:17px;font-weight:600}
+.side-body{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-align:center;padding:24px;line-height:1.6}
+.chat{flex:1;display:flex;flex-direction:column;background:var(--bg-chat);overflow:hidden}
+.ch{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-head);border-bottom:1px solid var(--border)}
+.ch-av{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.ch-info{flex:1}
+.ch-name{font-size:16px;font-weight:600;line-height:1.2}
+.ch-status{font-size:13px;color:var(--accent)}
+.ch-status.typing{animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.rbtn{background:#2a3942;border:none;color:var(--muted);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer}
+.rbtn:hover{background:#3a4952;color:var(--txt)}
+.msgs{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:4px}
+.msgs::-webkit-scrollbar{width:6px}
+.msgs::-webkit-scrollbar-thumb{background:#2a3942;border-radius:3px}
+.dsep{display:flex;align-items:center;justify-content:center;margin:8px 0}
+.dsep span{background:#182229cc;color:var(--muted);font-size:12px;padding:3px 10px;border-radius:8px}
+.row{display:flex;margin:1px 0}
+.row.in{justify-content:flex-start}
+.row.out{justify-content:flex-end}
+.bub{max-width:65%;padding:6px 10px 8px;border-radius:8px;font-size:14.5px;line-height:1.5;word-break:break-word;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.bub.in{background:var(--bg-in);border-top-left-radius:0}
+.bub.out{background:var(--bg-out);border-top-right-radius:0}
+.btime{font-size:11px;color:var(--time);float:right;margin-left:8px;margin-top:2px;line-height:1}
+.bchk{font-size:11px;color:#53bdeb;margin-left:2px}
+.bimg{max-width:260px;border-radius:8px;overflow:hidden;animation:fi .2s ease}
+.bimg img{width:100%;display:block}
+.ctab{background:var(--bg-in);border-radius:8px;border-top-left-radius:0;overflow:hidden;max-width:65%;animation:fi .2s ease}
+.ctab-txt{padding:8px 12px 6px;font-size:14.5px;line-height:1.5;white-space:pre-line}
+.ctab-btn{display:block;width:100%;padding:12px;background:var(--cta);color:#fff;font-size:14px;font-weight:700;text-align:center;text-decoration:none;border:none;cursor:pointer;transition:background .2s}
+.ctab-btn:hover{background:var(--ctah)}
+.typ{display:flex;align-items:center;gap:4px;padding:10px 12px;background:var(--bg-in);border-radius:8px;border-top-left-radius:0;width:fit-content;animation:fi .15s ease}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.15s}
+.dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.inp-area{padding:10px 12px;background:var(--bg-head);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:10px}
+.inp{flex:1;background:#2a3942;border:none;border-radius:8px;color:var(--txt);font-size:15px;padding:10px 14px;resize:none;min-height:42px;max-height:120px;line-height:1.4;outline:none;font-family:inherit}
+.inp::placeholder{color:var(--muted)}
+.sbtn{width:42px;height:42px;border-radius:50%;background:#00a884;border:none;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .2s,transform .1s}
+.sbtn:hover{background:#019975}
+.sbtn:active{transform:scale(.93)}
+.sbtn:disabled{background:#3a4952;cursor:not-allowed}
+@media(max-width:768px){.side{display:none}.bub,.ctab{max-width:82%}.bimg{max-width:220px}}
+</style>
 </head>
 <body>
 <div id="root"></div>
-
 <script>
 var CONFIG = {
-  atendenteName: "Julia",
-  atendenteAvatar: "https://i.pravatar.cc/100?img=47",
+  name: "Julia",
+  avatar: "https://i.pravatar.cc/100?img=47",
   hookImage: "https://placehold.co/400x300/1a1a2e/ffffff?text=Sua+Imagem+Aqui",
   ctaLink: "https://SEU_LINK_AQUI.com",
-  ctaButtonText: "LIBERAR MEU ACESSO AGORA",
+  ctaBtn: "LIBERAR MEU ACESSO AGORA",
   typingDelay: 1400,
   betweenDelay: 900,
   reactivationDelay: 300000,
   funnel: {
-    stage0: [["Oi... vi que voce entrou aqui agora", "Fiquei curiosa... como voce se chama?"]],
-    stage1: [
-      ["Prazer, {name}... gostei de voce ter aparecido aqui", "Voce chegou aqui por acaso... ou ja tava curioso mesmo?"],
-      ["Ah, {name}... que nome bom", "Mas me conta... voce veio aqui por acaso ou ja tava me procurando?"]
-    ],
-    stage2: [
-      ["Confesso que nem todo mundo que entra aqui eu respondo assim...", "Mas voce parece diferente"],
-      ["Olha... eu nao faco isso com qualquer um nao...", "Mas voce me pareceu diferente"]
-    ],
-    stage3: [
-      ["Posso te mostrar uma coisinha que eu fiz hoje...", "Mas to com um pouquinho de vergonha"],
-      ["Tem uma coisa que eu fiz hoje que poucas pessoas viram...", "Posso te mostrar? To meio com vergonha"]
-    ],
-    stage4: [
-      ["Nao ri de mim ta... eu quase nao mostro isso assim"],
-      ["Pode falar... o que achou? Eu confiei em voce"]
-    ],
-    stage5: [
-      ["Isso ai e so uma parte...", "Tem coisas que eu nao deixo abertas desse jeito..."],
-      ["Isso foi so um pedacinho...", "O que ta guardado e bem melhor"]
-    ],
-    stage6: [
-      ["Tem gente que entra so por curiosidade...", "Mas quando ve tudo... nao sai mais"],
-      ["Sabe aquela coisa que voce nao consegue parar de ver?", "E mais ou menos isso..."]
-    ],
-    stage7: [
-      ["Se eu te mostrar o resto... voce aguenta?"],
-      ["Acha que consegue ver tudo sem travar?"]
-    ],
-    stage8: [
-      ["Entao nao fica so olhando daqui...", "Entra la e ve tudo sem filtro"],
-      ["Vai la entao... ta tudo te esperando"]
-    ],
-    stage9: [
-      ["Eu deixei liberado por um valor bem baixo hoje...", "Mas nao sei ate quando isso vai ficar assim"],
-      ["Ta com um precinho especial agora...", "Depois nao sei se vai continuar assim"]
-    ]
+    s0:[["Oi... vi que voce entrou aqui agora","Fiquei curiosa... como voce se chama?"]],
+    s1:[["Prazer, {n}... gostei de voce ter aparecido aqui","Voce chegou aqui por acaso... ou ja tava curioso mesmo?"],
+        ["Ah, {n}... que nome bom","Mas me conta... voce veio aqui por acaso ou ja tava me procurando?"]],
+    s2:[["Confesso que nem todo mundo que entra aqui eu respondo assim...","Mas voce parece diferente"],
+        ["Olha... eu nao faco isso com qualquer um nao...","Mas voce me pareceu diferente"]],
+    s3:[["Posso te mostrar uma coisinha que eu fiz hoje...","Mas to com um pouquinho de vergonha"],
+        ["Tem uma coisa que eu fiz hoje que poucas pessoas viram...","Posso te mostrar? To meio com vergonha"]],
+    s4:[["Nao ri de mim ta... eu quase nao mostro isso assim"],
+        ["Pode falar... o que achou? Eu confiei em voce"]],
+    s5:[["Isso ai e so uma parte...","Tem coisas que eu nao deixo abertas desse jeito..."],
+        ["Isso foi so um pedacinho...","O que ta guardado e bem melhor"]],
+    s6:[["Tem gente que entra so por curiosidade...","Mas quando ve tudo... nao sai mais"],
+        ["Sabe aquela coisa que voce nao consegue parar de ver?","E mais ou menos isso..."]],
+    s7:[["Se eu te mostrar o resto... voce aguenta?"],
+        ["Acha que consegue ver tudo sem travar?"]],
+    s8:[["Entao nao fica so olhando daqui...","Entra la e ve tudo sem filtro"],
+        ["Vai la entao... ta tudo te esperando"]],
+    s9:[["Eu deixei liberado por um valor bem baixo hoje...","Mas nao sei ate quando isso vai ficar assim"],
+        ["Ta com um precinho especial agora...","Depois nao sei se vai continuar assim"]]
   },
-  redirectResponses: [
-    ["Depois eu te conto isso", "Primeiro quero te mostrar uma coisa..."],
-    ["Boa pergunta... mas depois", "Tem uma coisa aqui que voce precisa ver antes..."],
-    ["Isso eu respondo depois...", "Mas antes... deixa eu te mostrar uma coisa"]
-  ],
-  hesitationResponses: [
-    ["Relaxa... entra sem compromisso", "Eu so queria te mostrar porque acho que voce vai gostar"],
-    ["Nao precisa ter medo nao...", "Entra so pra dar uma olhada... depois voce me conta"]
-  ],
-  negativeRedirect: [
-    ["Ta bom... eu nao ia te mostrar mesmo", "Mas acho que voce ia se surpreender..."],
-    ["Relaxa... eu entendo", "Mas tem uma parte que eu quase nao mostro..."],
-    ["Ok... respeito", "Mas so vou deixar aqui que muita gente falou que valeu..."]
-  ],
-  reactivationMessages: [
-    ["Sumiu, {name}?", "Eu ia te mostrar uma coisa melhor ainda..."],
-    ["Oi {name}... ainda ta ai?", "Nao vai perder o que eu ia te mostrar..."]
-  ],
-  positiveKeywords: ["sim","claro","pode","vai","quero","manda","mostra","bora","vamos","to","logico","ok","okay","s","ss","sss","kkk","rs","haha","yeah","yep","yes","boa","massa","show","top","beleza","aguento","consigo","vou","entre","ta","certeza","por favor","pfv","plz"],
-  hesitationKeywords: ["nao sei","talvez","depende","sei la","hm","hmm","acho que","sera","perigoso","caro","quanto","dinheiro","vou pensar","nao agora","espera"],
-  negativeKeywords: ["nao","nao quero","agora nao","sai fora","para","nada","nem","jamais","nunca","nope","nop","n"]
+  redirect:[["Depois eu te conto isso","Primeiro quero te mostrar uma coisa..."],
+            ["Boa pergunta... mas depois","Tem uma coisa aqui que voce precisa ver antes..."],
+            ["Isso eu respondo depois...","Mas antes... deixa eu te mostrar uma coisa"]],
+  hesitation:[["Relaxa... entra sem compromisso","Eu so queria te mostrar porque acho que voce vai gostar"],
+              ["Nao precisa ter medo nao...","Entra so pra dar uma olhada... depois voce me conta"]],
+  negative:[["Ta bom... eu nao ia te mostrar mesmo","Mas acho que voce ia se surpreender..."],
+            ["Relaxa... eu entendo","Mas tem uma parte que eu quase nao mostro..."],
+            ["Ok... respeito","Mas so vou deixar aqui que muita gente falou que valeu..."]],
+  reactivation:[["Sumiu, {n}?","Eu ia te mostrar uma coisa melhor ainda..."],
+                ["Oi {n}... ainda ta ai?","Nao vai perder o que eu ia te mostrar..."]],
+  pos:["sim","claro","pode","vai","quero","manda","mostra","bora","vamos","to","logico","ok","okay","s","ss","sss","kkk","rs","haha","yeah","yep","yes","boa","massa","show","top","beleza","aguento","consigo","vou","entre","ta","certeza","pfv","plz","quero ver","pode sim","com certeza"],
+  hes:["nao sei","talvez","depende","sei la","hm","hmm","acho que","sera","perigoso","caro","quanto","dinheiro","vou pensar","nao agora","espera"],
+  neg:["nao","nao quero","agora nao","sai fora","para","nada","nem","jamais","nunca","nope","nop","n","nn","nao quero ver"]
 };
 </script>
-
 <script type="text/babel">
-var useState = React.useState;
-var useEffect = React.useEffect;
-var useRef = React.useRef;
-var useCallback = React.useCallback;
+var useState=React.useState,useEffect=React.useEffect,useRef=React.useRef,useCallback=React.useCallback;
 
-function sleep(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)});}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function fmt(t,n){return t.replace(/\{n\}/g,n||"voce");}
+function tnow(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function fmt(text, name) { return text.replace(/\{name\}/g, name || "voce"); }
-
-function timeNow() { return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
-
-function isPositive(text) {
-  var t = text.toLowerCase().trim();
-  return CONFIG.positiveKeywords.some(function(kw){ return t === kw || t.startsWith(kw + " "); });
+function isPos(t){
+  var s=t.toLowerCase().trim();
+  return CONFIG.pos.some(function(k){return s===k||s.startsWith(k+" ");});
+}
+function isHes(t){
+  var s=t.toLowerCase().trim();
+  return CONFIG.hes.some(function(k){return s.includes(k);});
+}
+function isNeg(t){
+  var s=t.toLowerCase().trim();
+  return CONFIG.neg.some(function(k){return s===k||s.startsWith(k+" ");});
+}
+function extractName(t){
+  var pfx=[/^pode me chamar de\s+/i,/^me chama de\s+/i,/^me chamo\s+/i,
+           /^meu nome\s+eh\s+/i,/^meu nome\s+e\s+/i,/^eu sou\s+/i,/^sou\s+/i];
+  var c=t.trim();
+  for(var i=0;i<pfx.length;i++){var r=c.replace(pfx[i],"");if(r!==c){c=r;break;}}
+  var f=c.trim().split(/\s+/)[0];
+  return f.charAt(0).toUpperCase()+f.slice(1).toLowerCase();
 }
 
-function isHesitation(text) {
-  var t = text.toLowerCase().trim();
-  return CONFIG.hesitationKeywords.some(function(kw){ return t.includes(kw); });
+var SKEY="julia_v3";
+function load(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);}catch(e){}return null;}
+function save(m,s,n){try{localStorage.setItem(SKEY,JSON.stringify({messages:m,stage:s,name:n}));}catch(e){}}
+function clear(){try{localStorage.removeItem(SKEY);}catch(e){}}
+
+function Dots(){return React.createElement("div",{className:"row in"},React.createElement("div",{className:"typ"},React.createElement("div",{className:"dot"}),React.createElement("div",{className:"dot"}),React.createElement("div",{className:"dot"})));}
+
+function Bubble(p){
+  var m=p.msg,dir=m.from==="julia"?"in":"out";
+  return React.createElement("div",{className:"row "+dir},
+    React.createElement("div",{className:"bub "+dir},m.text,
+      React.createElement("span",{className:"btime"},m.time,
+        m.from==="user"&&React.createElement("span",{className:"bchk"}," vv"))));
+}
+function Img(){return React.createElement("div",{className:"row in"},React.createElement("div",{className:"bimg"},React.createElement("img",{src:CONFIG.hookImage,alt:""})));}
+function Cta(p){
+  return React.createElement("div",{className:"row in"},
+    React.createElement("div",{className:"ctab"},
+      React.createElement("div",{className:"ctab-txt"},p.text),
+      React.createElement("a",{className:"ctab-btn",href:CONFIG.ctaLink,target:"_blank",rel:"noopener noreferrer"},CONFIG.ctaBtn)));
 }
 
-function isNegative(text) {
-  var t = text.toLowerCase().trim();
-  return CONFIG.negativeKeywords.some(function(kw){ return t === kw || t.startsWith(kw + " "); });
-}
+function App(){
+  var sv=load();
+  var _s=useState(sv?sv.stage:-1),stage=_s[0],setStage=_s[1];
+  var _n=useState(sv?sv.name:""),uname=_n[0],setUname=_n[1];
+  var _m=useState(sv?sv.messages:[]),msgs=_m[0],setMsgs=_m[1];
+  var _t=useState(false),typing=_t[0],setTyping=_t[1];
+  var _i=useState(""),inp=_i[0],setInp=_i[1];
+  var _l=useState(false),locked=_l[0],setLocked=_l[1];
+  var _st=useState("online"),status=_st[0],setStatus=_st[1];
 
-function extractName(text) {
-  var prefixes = [
-    /^pode me chamar de\s+/i,
-    /^me chama de\s+/i,
-    /^me chamo\s+/i,
-    /^meu nome e\s+/i,
-    /^meu nome eh\s+/i,
-    /^meu nome é\s+/i,
-    /^eu sou\s+/i,
-    /^sou\s+/i,
-    /^é\s+/i,
-    /^e\s+/i
-  ];
-  var cleaned = text.trim();
-  for (var i = 0; i < prefixes.length; i++) {
-    var result = cleaned.replace(prefixes[i], "");
-    if (result !== cleaned) { cleaned = result; break; }
-  }
-  var first = cleaned.trim().split(/\s+/)[0];
-  return first.charAt(0).toLocaleUpperCase("pt-BR") + first.slice(1).toLocaleLowerCase("pt-BR");
-}
+  var endRef=useRef(null),inpRef=useRef(null),rtRef=useRef(null);
+  var stgRef=useRef(stage),nmRef=useRef(uname);
+  useEffect(function(){stgRef.current=stage;},[stage]);
+  useEffect(function(){nmRef.current=uname;},[uname]);
+  useEffect(function(){if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
+  useEffect(function(){if(msgs.length>0)save(msgs,stage,uname);},[msgs,stage,uname]);
 
-var STORAGE_KEY = "julia_chat_v2";
+  var addMsg=useCallback(function(m){setMsgs(function(p){return p.concat([m]);});},[]);
 
-function loadState() {
-  try { var raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch(e) {}
-  return null;
-}
-function saveState(messages, stage, name) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages: messages, stage: stage, name: name })); } catch(e) {}
-}
-function clearState() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-}
-
-function TypingIndicator() {
-  return (
-    <div className="bubble-row incoming">
-      <div className="typing-indicator">
-        <div className="dot" /><div className="dot" /><div className="dot" />
-      </div>
-    </div>
-  );
-}
-
-function TextBubble(props) {
-  var msg = props.msg;
-  return (
-    <div className={"bubble-row " + (msg.from === "julia" ? "incoming" : "outgoing")}>
-      <div className={"bubble " + (msg.from === "julia" ? "incoming" : "outgoing")}>
-        {msg.text}
-        <span className="bubble-time">
-          {msg.time}
-          {msg.from === "user" && <span className="bubble-check"> checkcheck</span>}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ImageBubble() {
-  return (
-    <div className="bubble-row incoming">
-      <div className="bubble-img">
-        <img src={CONFIG.hookImage} alt="Imagem" />
-      </div>
-    </div>
-  );
-}
-
-function CtaBubble(props) {
-  return (
-    <div className="bubble-row incoming">
-      <div className="cta-bubble">
-        <div className="cta-bubble-text">{props.text}</div>
-        <a className="cta-bubble-btn" href={CONFIG.ctaLink} target="_blank" rel="noopener noreferrer">
-          {CONFIG.ctaButtonText}
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function App() {
-  var saved = loadState();
-  var stageInit = (saved && saved.stage !== undefined) ? saved.stage : -1;
-  var nameInit  = (saved && saved.name) ? saved.name : "";
-  var msgsInit  = (saved && saved.messages) ? saved.messages : [];
-
-  var stateStage    = useState(stageInit);
-  var stage         = stateStage[0];
-  var setStage      = stateStage[1];
-
-  var stateName     = useState(nameInit);
-  var userName      = stateName[0];
-  var setUserName   = stateName[1];
-
-  var stateMsgs     = useState(msgsInit);
-  var messages      = stateMsgs[0];
-  var setMessages   = stateMsgs[1];
-
-  var stateTyping   = useState(false);
-  var isTyping      = stateTyping[0];
-  var setIsTyping   = stateTyping[1];
-
-  var stateInput    = useState("");
-  var inputVal      = stateInput[0];
-  var setInputVal   = stateInput[1];
-
-  var stateLocked   = useState(false);
-  var inputLocked   = stateLocked[0];
-  var setInputLocked = stateLocked[1];
-
-  var stateStatus   = useState("online");
-  var headerStatus  = stateStatus[0];
-  var setHeaderStatus = stateStatus[1];
-
-  var messagesEndRef  = useRef(null);
-  var inputRef        = useRef(null);
-  var reactivationRef = useRef(null);
-  var stageRef        = useRef(stage);
-  var nameRef         = useRef(userName);
-
-  useEffect(function(){ stageRef.current = stage; }, [stage]);
-  useEffect(function(){ nameRef.current = userName; }, [userName]);
-
-  useEffect(function(){
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isTyping]);
-
-  useEffect(function(){
-    if (messages.length > 0) saveState(messages, stage, userName);
-  }, [messages, stage, userName]);
-
-  var addMessage = useCallback(function(msg){
-    setMessages(function(prev){ return prev.concat([msg]); });
-  }, []);
-
-  var juliaSends = useCallback(function(lines){
+  var send=useCallback(function(lines){
     return new Promise(function(resolve){
-      var i = 0;
-      function next() {
-        if (i >= lines.length) { setInputLocked(false); if (inputRef.current) inputRef.current.focus(); resolve(); return; }
-        var line = lines[i]; i++;
-        var doSend = function(){
-          setHeaderStatus("digitando...");
-          setIsTyping(true);
-          sleep(CONFIG.typingDelay).then(function(){
-            setIsTyping(false);
-            setHeaderStatus("online");
-            if (line && line.type === "image") {
-              addMessage({ type: "image" });
-            } else if (line && line.type === "cta") {
-              addMessage({ type: "cta", text: line.text });
-            } else {
-              addMessage({ from: "julia", text: line, time: timeNow(), type: "text" });
-            }
-            if (i < lines.length) { sleep(CONFIG.betweenDelay).then(next); } else { next(); }
-          });
-        };
-        if (i === 1) { setInputLocked(true); doSend(); } else { doSend(); }
+      setLocked(true);
+      var i=0;
+      function next(){
+        if(i>=lines.length){setLocked(false);if(inpRef.current)inpRef.current.focus();resolve();return;}
+        var line=lines[i];i++;
+        setStatus("digitando...");setTyping(true);
+        sleep(CONFIG.typingDelay).then(function(){
+          setTyping(false);setStatus("online");
+          if(line&&line.type==="img") addMsg({type:"img"});
+          else if(line&&line.type==="cta") addMsg({type:"cta",text:line.text});
+          else addMsg({from:"julia",text:line,time:tnow(),type:"txt"});
+          if(i<lines.length) sleep(CONFIG.betweenDelay).then(next);
+          else next();
+        });
       }
       next();
     });
-  }, [addMessage]);
+  },[addMsg]);
 
-  var resetReactivation = useCallback(function(){
-    if (reactivationRef.current) clearTimeout(reactivationRef.current);
-    reactivationRef.current = setTimeout(function(){
-      var s = stageRef.current;
-      if (s >= 0 && s < 9) {
-        var pair = pick(CONFIG.reactivationMessages);
-        var n = nameRef.current;
-        juliaSends([fmt(pair[0], n), pair[1] ? fmt(pair[1], n) : null].filter(Boolean));
+  var resetRT=useCallback(function(){
+    if(rtRef.current)clearTimeout(rtRef.current);
+    rtRef.current=setTimeout(function(){
+      var s=stgRef.current;
+      if(s>=0&&s<9){
+        var p=pick(CONFIG.reactivation),n=nmRef.current;
+        send([fmt(p[0],n)].concat(p[1]?[fmt(p[1],n)]:[]));
       }
-    }, CONFIG.reactivationDelay);
-  }, [juliaSends]);
+    },CONFIG.reactivationDelay);
+  },[send]);
 
-  var startFunnel = useCallback(function(){
-    if (stageRef.current !== -1) return;
+  var startFunnel=useCallback(function(){
+    if(stgRef.current!==-1)return;
     setStage(0);
-    var pair = pick(CONFIG.funnel.stage0);
-    juliaSends(pair);
-  }, [juliaSends]);
+    var p=pick(CONFIG.funnel.s0);
+    send(p);
+  },[send]);
 
   useEffect(function(){
-    if (stage === -1) { setTimeout(startFunnel, 800); }
-    resetReactivation();
-    return function(){ if (reactivationRef.current) clearTimeout(reactivationRef.current); };
-  }, []);
+    if(stage===-1)setTimeout(startFunnel,800);
+    resetRT();
+    return function(){if(rtRef.current)clearTimeout(rtRef.current);};
+  },[]);
 
-  var handleUserSend = useCallback(function(text){
-    if (!text.trim() || inputLocked) return;
-    addMessage({ from: "user", text: text.trim(), time: timeNow(), type: "text" });
-    setInputVal("");
-    resetReactivation();
+  var handleSend=useCallback(function(text){
+    if(!text.trim()||locked)return;
+    addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
+    setInp("");resetRT();
+    var s=stgRef.current,n=nmRef.current;
 
-    var s = stageRef.current;
-    var name = nameRef.current;
-
-    if (s === 0) {
-      var n = extractName(text);
-      setUserName(n);
-      nameRef.current = n;
-      setStage(1);
-      var pair1 = pick(CONFIG.funnel.stage1);
-      juliaSends([fmt(pair1[0], n)].concat(pair1[1] ? [fmt(pair1[1], n)] : []));
+    if(s===0){
+      var nm=extractName(text);
+      setUname(nm);nmRef.current=nm;setStage(1);
+      var p=pick(CONFIG.funnel.s1);
+      send([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[]));
       return;
     }
-
-    if (s === 1) {
+    if(s===1){
       setStage(2);
-      var p2 = pick(CONFIG.funnel.stage2);
-      var p3 = pick(CONFIG.funnel.stage3);
-      juliaSends([fmt(p2[0], name)].concat(p2[1] ? [fmt(p2[1], name)] : [])).then(function(){
+      var p2=pick(CONFIG.funnel.s2),p3=pick(CONFIG.funnel.s3);
+      send([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[])).then(function(){
         return sleep(400);
       }).then(function(){
-        juliaSends([fmt(p3[0], name)].concat(p3[1] ? [fmt(p3[1], name)] : []));
+        send([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
         setStage(3);
       });
       return;
     }
-
-    if (s === 3) {
-      if (isNegative(text)) {
-        var nr = pick(CONFIG.negativeRedirect);
-        juliaSends([fmt(nr[0], name), fmt(nr[1], name)]);
-        return;
-      }
-      if (isHesitation(text)) {
-        var hr = pick(CONFIG.hesitationResponses);
-        juliaSends([fmt(hr[0], name)].concat(hr[1] ? [fmt(hr[1], name)] : []));
-        return;
-      }
-      if (!isPositive(text)) {
-        var rr = pick(CONFIG.redirectResponses);
-        juliaSends([fmt(rr[0], name)].concat(rr[1] ? [fmt(rr[1], name)] : []));
-        return;
-      }
+    if(s===3){
+      if(isNeg(text)){var nr=pick(CONFIG.negative);send([fmt(nr[0],n),fmt(nr[1],n)]);return;}
+      if(isHes(text)){var hr=pick(CONFIG.hesitation);send([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
+      if(!isPos(text)){var rr=pick(CONFIG.redirect);send([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
       setStage(4);
-      var p4 = pick(CONFIG.funnel.stage4);
-      juliaSends([{ type: "image" }]).then(function(){
-        return sleep(300);
-      }).then(function(){
-        return juliaSends([fmt(p4[0], name)].concat(p4[1] ? [fmt(p4[1], name)] : []));
-      }).then(function(){
-        return sleep(400);
-      }).then(function(){
-        var p5 = pick(CONFIG.funnel.stage5);
-        juliaSends([fmt(p5[0], name)].concat(p5[1] ? [fmt(p5[1], name)] : []));
+      var p4=pick(CONFIG.funnel.s4);
+      send([{type:"img"}]).then(function(){return sleep(300);}).then(function(){
+        return send([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
+      }).then(function(){return sleep(400);}).then(function(){
+        var p5=pick(CONFIG.funnel.s5);
+        send([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
         setStage(5);
       });
       return;
     }
-
-    if (s === 5) {
+    if(s===5){
       setStage(6);
-      var p6 = pick(CONFIG.funnel.stage6);
-      var p7 = pick(CONFIG.funnel.stage7);
-      juliaSends([fmt(p6[0], name)].concat(p6[1] ? [fmt(p6[1], name)] : [])).then(function(){
+      var p6=pick(CONFIG.funnel.s6),p7=pick(CONFIG.funnel.s7);
+      send([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[])).then(function(){
         return sleep(400);
       }).then(function(){
-        juliaSends([fmt(p7[0], name)].concat(p7[1] ? [fmt(p7[1], name)] : []));
+        send([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
         setStage(7);
       });
       return;
     }
-
-    if (s === 7) {
-      if (isNegative(text)) {
-        var nr2 = pick(CONFIG.negativeRedirect);
-        juliaSends([fmt(nr2[0], name), fmt(nr2[1], name)]);
-        return;
-      }
-      if (isHesitation(text)) {
-        var hr2 = pick(CONFIG.hesitationResponses);
-        juliaSends([fmt(hr2[0], name)].concat(hr2[1] ? [fmt(hr2[1], name)] : []));
-        return;
-      }
-      if (!isPositive(text)) {
-        var rr2 = pick(CONFIG.redirectResponses);
-        juliaSends([fmt(rr2[0], name)].concat(rr2[1] ? [fmt(rr2[1], name)] : []));
-        return;
-      }
+    if(s===7){
+      if(isNeg(text)){var nr2=pick(CONFIG.negative);send([fmt(nr2[0],n),fmt(nr2[1],n)]);return;}
+      if(isHes(text)){var hr2=pick(CONFIG.hesitation);send([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
+      if(!isPos(text)){var rr2=pick(CONFIG.redirect);send([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
       setStage(8);
-      var p8 = pick(CONFIG.funnel.stage8);
-      var ctaText = p8.join("\n");
-      juliaSends([{ type: "cta", text: fmt(ctaText, name) }]).then(function(){
+      var p8=pick(CONFIG.funnel.s8);
+      send([{type:"cta",text:fmt(p8.join("\n"),n)}]).then(function(){
         return sleep(600);
       }).then(function(){
-        var p9 = pick(CONFIG.funnel.stage9);
-        juliaSends([fmt(p9[0], name)].concat(p9[1] ? [fmt(p9[1], name)] : []));
+        var p9=pick(CONFIG.funnel.s9);
+        send([fmt(p9[0],n)].concat(p9[1]?[fmt(p9[1],n)]:[]));
         setStage(9);
       });
       return;
     }
+    if(s>=9){send(["Nao perde tempo nao, "+n,"O link ta la te esperando"]);return;}
+    var rr3=pick(CONFIG.redirect);
+    send([fmt(rr3[0],n)].concat(rr3[1]?[fmt(rr3[1],n)]:[]));
+  },[locked,addMsg,send,resetRT]);
 
-    if (s >= 9) {
-      juliaSends(["Nao perde tempo nao, " + name, "O link ta la te esperando"]);
-      return;
-    }
+  var restart=useCallback(function(){
+    clear();setMsgs([]);setStage(-1);setUname("");setInp("");
+    stgRef.current=-1;nmRef.current="";
+    if(rtRef.current)clearTimeout(rtRef.current);
+    setTimeout(startFunnel,800);
+  },[startFunnel]);
 
-    var rr3 = pick(CONFIG.redirectResponses);
-    juliaSends([fmt(rr3[0], name)].concat(rr3[1] ? [fmt(rr3[1], name)] : []));
-  }, [inputLocked, addMessage, juliaSends, resetReactivation]);
-
-  var handleRestart = useCallback(function(){
-    clearState();
-    setMessages([]);
-    setStage(-1);
-    setUserName("");
-    setInputVal("");
-    stageRef.current = -1;
-    nameRef.current = "";
-    if (reactivationRef.current) clearTimeout(reactivationRef.current);
-    setTimeout(startFunnel, 800);
-  }, [startFunnel]);
-
-  var handleKeyDown = function(e){
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleUserSend(inputVal); }
-  };
-
-  var handleInputChange = function(e){
-    setInputVal(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-  };
-
-  function renderMessage(msg, idx) {
-    if (msg.type === "image") return <ImageBubble key={idx} />;
-    if (msg.type === "cta")   return <CtaBubble key={idx} text={msg.text} />;
-    return <TextBubble key={idx} msg={msg} />;
+  function renderMsg(m,i){
+    if(m.type==="img") return React.createElement(Img,{key:i});
+    if(m.type==="cta") return React.createElement(Cta,{key:i,text:m.text});
+    return React.createElement(Bubble,{key:i,msg:m});
   }
 
-  var today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  var today=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
 
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <img className="sidebar-avatar" src={CONFIG.atendenteAvatar} alt={CONFIG.atendenteName} />
-          <span className="sidebar-title">{CONFIG.atendenteName}</span>
-        </div>
-        <div className="sidebar-body">Selecione um chat<br />para comecar a conversar</div>
-      </aside>
-      <main className="chat-pane">
-        <div className="chat-header">
-          <img className="chat-header-avatar" src={CONFIG.atendenteAvatar} alt={CONFIG.atendenteName} />
-          <div className="chat-header-info">
-            <div className="chat-header-name">{CONFIG.atendenteName}</div>
-            <div className={"chat-header-status" + (isTyping ? " typing" : "")}>
-              {isTyping ? "digitando..." : headerStatus}
-            </div>
-          </div>
-          <button className="restart-btn" onClick={handleRestart}>reiniciar</button>
-        </div>
-        <div className="messages-area">
-          <div className="date-separator"><span>Hoje - {today}</span></div>
-          {messages.map(function(msg, idx){ return renderMessage(msg, idx); })}
-          {isTyping && <TypingIndicator />}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="input-area">
-          <textarea
-            ref={inputRef}
-            className="input-field"
-            placeholder="Digite uma mensagem"
-            value={inputVal}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            disabled={inputLocked}
-          />
-          <button
-            className="send-btn"
-            onClick={function(){ handleUserSend(inputVal); }}
-            disabled={inputLocked || !inputVal.trim()}
-          >&#9658;</button>
-        </div>
-      </main>
-    </div>
-  );
+  return React.createElement("div",{className:"shell"},
+    React.createElement("aside",{className:"side"},
+      React.createElement("div",{className:"side-head"},
+        React.createElement("img",{className:"side-av",src:CONFIG.avatar,alt:CONFIG.name}),
+        React.createElement("span",{className:"side-title"},CONFIG.name)),
+      React.createElement("div",{className:"side-body"},"Selecione um chat para comecar")),
+    React.createElement("main",{className:"chat"},
+      React.createElement("div",{className:"ch"},
+        React.createElement("img",{className:"ch-av",src:CONFIG.avatar,alt:CONFIG.name}),
+        React.createElement("div",{className:"ch-info"},
+          React.createElement("div",{className:"ch-name"},CONFIG.name),
+          React.createElement("div",{className:"ch-status"+(typing?" typing":"")},typing?"digitando...":status)),
+        React.createElement("button",{className:"rbtn",onClick:restart},"reiniciar")),
+      React.createElement("div",{className:"msgs"},
+        React.createElement("div",{className:"dsep"},React.createElement("span",null,"Hoje - "+today)),
+        msgs.map(function(m,i){return renderMsg(m,i);}),
+        typing&&React.createElement(Dots,null),
+        React.createElement("div",{ref:endRef})),
+      React.createElement("div",{className:"inp-area"},
+        React.createElement("textarea",{ref:inpRef,className:"inp",placeholder:"Digite uma mensagem",value:inp,rows:1,disabled:locked,
+          onChange:function(e){setInp(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";},
+          onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend(inp);}}}),
+        React.createElement("button",{className:"sbtn",disabled:locked||!inp.trim(),onClick:function(){handleSend(inp);}},">>"))));
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
 </script>
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                   
