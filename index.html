@@ -351,8 +351,102 @@
 <body>
 <div id="root"></div>
 
-<!-- Config deve ser carregado antes do app -->
-<script src="config.js"></script>
+<!-- ── CONFIGURAÇÕES — edite aqui ─────────────────────────────── -->
+<script>
+const CONFIG = {
+
+  /* PERSONA */
+  atendenteName: "Júlia",
+  atendenteAvatar: "https://i.pravatar.cc/100?img=47",
+
+  /* IMAGEM DE GANCHO (Etapa 5)
+     Troque pela URL da sua imagem ou caminho local: "gancho.jpg" */
+  hookImage: "https://placehold.co/400x300/1a1a2e/ffffff?text=Sua+Imagem+Aqui",
+
+  /* LINK DE ACESSO (Etapa 9 — CTA) */
+  ctaLink: "https://SEU_LINK_AQUI.com",
+
+  /* TEXTO DO BOTÃO */
+  ctaButtonText: "🔓 LIBERAR MEU ACESSO AGORA",
+
+  /* DELAYS (milissegundos) */
+  typingDelay: 1400,
+  betweenDelay: 900,
+  reactivationDelay: 5 * 60 * 1000,
+
+  /* FUNIL — MENSAGENS */
+  funnel: {
+    stage0: [
+      ["Oi… vi que você entrou aqui agora 👀", "Fiquei curiosa… como você se chama?"],
+    ],
+    stage1: [
+      ["Prazer, {name}… gostei de você ter aparecido aqui 😅", "Você chegou aqui por acaso… ou já tava curioso mesmo?"],
+      ["Ah, {name}… que nome bom 😅", "Mas me conta… você veio aqui por acaso ou já tava me procurando?"],
+    ],
+    stage2: [
+      ["Confesso que nem todo mundo que entra aqui eu respondo assim…", "Mas você parece diferente 👀"],
+      ["Olha… eu não faço isso com qualquer um não…", "Mas você me pareceu diferente 👀"],
+    ],
+    stage3: [
+      ["Posso te mostrar uma coisinha que eu fiz hoje…", "Mas tô com um pouquinho de vergonha 😅"],
+      ["Tem uma coisa que eu fiz hoje que poucas pessoas viram…", "Posso te mostrar? Tô meio com vergonha 😅"],
+    ],
+    stage4: [
+      ["Não ri de mim tá… eu quase não mostro isso assim"],
+      ["Pode falar… o que achou? Eu confiei em você 😅"],
+    ],
+    stage5: [
+      ["Isso aí é só uma parte…", "Tem coisas que eu não deixo abertas desse jeito…"],
+      ["Isso foi só um pedacinho…", "O que tá guardado é bem melhor 👀"],
+    ],
+    stage6: [
+      ["Tem gente que entra só por curiosidade…", "Mas quando vê tudo… não sai mais 👀"],
+      ["Sabe aquela coisa que você não consegue parar de ver?", "É mais ou menos isso… 👀"],
+    ],
+    stage7: [
+      ["Se eu te mostrar o resto… você aguenta? 😅"],
+      ["Acha que consegue ver tudo sem travar? 😅"],
+    ],
+    stage8: [
+      ["Então não fica só olhando daqui…", "Entra lá e vê tudo sem filtro 👇"],
+      ["Vai lá então… tá tudo te esperando 👇"],
+    ],
+    stage9: [
+      ["Eu deixei liberado por um valor bem baixo hoje…", "Mas não sei até quando isso vai ficar assim 👀"],
+      ["Tá com um precinho especial agora…", "Depois não sei se vai continuar assim 😅"],
+    ],
+  },
+
+  /* RESPOSTAS DE CONTROLE */
+  redirectResponses: [
+    ["Depois eu te conto isso 😅", "Primeiro quero te mostrar uma coisa…"],
+    ["Boa pergunta… mas depois 😅", "Tem uma coisa aqui que você precisa ver antes…"],
+    ["Isso eu respondo depois…", "Mas antes… deixa eu te mostrar uma coisa 👀"],
+  ],
+  hesitationResponses: [
+    ["Relaxa… entra sem compromisso", "Eu só queria te mostrar porque acho que você vai gostar 😅"],
+    ["Não precisa ter medo não…", "Entra só pra dar uma olhada… depois você me conta 😅"],
+  ],
+  reactivationMessages: [
+    ["Sumiu, {name}? 👀", "Eu ia te mostrar uma coisa melhor ainda…"],
+    ["Oi {name}… ainda tá aí? 👀", "Não vai perder o que eu ia te mostrar…"],
+  ],
+
+  /* PALAVRAS-CHAVE */
+  positiveKeywords: [
+    "sim","claro","pode","vai","quero","manda","mostra","bora","vamos",
+    "tô","to","tô dentro","lógico","logico","ok","okay","s","ss","sss",
+    "kkk","rs","haha","yeah","yep","yes","boa","massa","show","top",
+    "beleza","aguento","consigo","vou","entre","tá","ta","manda","bora",
+    "claro","quero ver","mostra","pode sim","com certeza","certeza",
+  ],
+  hesitationKeywords: [
+    "não sei","nao sei","talvez","depende","sei lá","sei la","hm","hmm",
+    "acho que","tipo","será","sera","perigoso","caro","quanto","dinheiro",
+    "vou pensar","pensar","não agora","nao agora","espera",
+  ],
+};
+</script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
@@ -375,6 +469,26 @@ const isHesitation = (text) => {
   const t = text.toLowerCase().trim();
   return CONFIG.hesitationKeywords.some((kw) => t.includes(kw));
 };
+
+const NEGATIVE_KEYWORDS = [
+  "não","nao","nãoo","naoo","n","nop","nope",
+  "não quero","nao quero","agora não","agora nao",
+  "depois","sai fora","para","para de","deixa","deixa pra la",
+  "deixa pra lá","nada","nem","jamais","nunca",
+];
+const isNegative = (text) => {
+  const t = text.toLowerCase().trim();
+  // Correspondência exata primeiro (evita "nao" dentro de "nao sei")
+  if (NEGATIVE_KEYWORDS.includes(t)) return true;
+  // Depois verifica se começa com palavra negativa
+  return NEGATIVE_KEYWORDS.some((kw) => t.startsWith(kw + " ") || t === kw);
+};
+
+const NEGATIVE_REDIRECT = [
+  ["Tá bom… eu não ia te mostrar mesmo 😅", "Mas acho que você ia se surpreender..."],
+  ["Relaxa… eu entendo 😅", "Mas tem uma parte que eu quase não mostro..."],
+  ["Ok… respeito 😅", "Mas só vou deixar aqui que muita gente falou que valeu..."],
+];
 
 const STORAGE_KEY = "julia_chat_v1";
 
@@ -615,167 +729,19 @@ function App() {
 
     // ── Stage 3: waiting for permission to send image ─────────────
     if (s === 3) {
+      if (isNegative(text)) {
+        // Não avança, não envia imagem — tenta reconquistar
+        const nr = pick(NEGATIVE_REDIRECT);
+        await juliaSends([fmt(nr[0], name), fmt(nr[1], name)]);
+        return; // permanece na stage 3
+      }
       if (isHesitation(text)) {
         const hr = pick(CONFIG.hesitationResponses);
         await juliaSends([fmt(hr[0], name), ...(hr[1] ? [fmt(hr[1], name)] : [])]);
-        return;
+        return; // permanece na stage 3
       }
-      // Positive or ambiguous → send image
-      setStage(4);
-      const p4 = pick(CONFIG.funnel.stage4);
-      await juliaSends([{ type: "image" }]);
-      await sleep(400);
-      await juliaSends([
-        fmt(p4[0], name),
-        ...(p4[1] ? [fmt(p4[1], name)] : []),
-      ]);
-      await sleep(500);
-      const p5 = pick(CONFIG.funnel.stage5);
-      await juliaSends([fmt(p5[0], name), ...(p5[1] ? [fmt(p5[1], name)] : [])]);
-      setStage(5);
-      return;
-    }
-
-    // ── Stage 5: escalada → desejo → convite ──────────────────────
-    if (s === 5) {
-      setStage(6);
-      const p6 = pick(CONFIG.funnel.stage6);
-      await juliaSends([fmt(p6[0], name), ...(p6[1] ? [fmt(p6[1], name)] : [])]);
-      await sleep(400);
-      const p7 = pick(CONFIG.funnel.stage7);
-      await juliaSends([fmt(p7[0], name), ...(p7[1] ? [fmt(p7[1], name)] : [])]);
-      setStage(7);
-      return;
-    }
-
-    // ── Stage 7: waiting for final confirmation ───────────────────
-    if (s === 7) {
-      if (isHesitation(text)) {
-        const hr = pick(CONFIG.hesitationResponses);
-        await juliaSends([fmt(hr[0], name), ...(hr[1] ? [fmt(hr[1], name)] : [])]);
-        return;
-      }
-      setStage(8);
-      const p8 = pick(CONFIG.funnel.stage8);
-      // Send CTA as special bubble
-      const ctaText = p8.join("\n");
-      await juliaSends([{ type: "cta", text: fmt(ctaText, name) }]);
-      await sleep(600);
-      const p9 = pick(CONFIG.funnel.stage9);
-      await juliaSends([fmt(p9[0], name), ...(p9[1] ? [fmt(p9[1], name)] : [])]);
-      setStage(9);
-      return;
-    }
-
-    // ── Stage 9+: funnel done, reinforce CTA ─────────────────────
-    if (s >= 9) {
-      await juliaSends([
-        `Não perde tempo não, ${name} 😅`,
-        `O link tá lá te esperando 👇`,
-      ]);
-      return;
-    }
-
-    // ── Default: redirect ─────────────────────────────────────────
-    const rr = pick(CONFIG.redirectResponses);
-    await juliaSends([fmt(rr[0], name), ...(rr[1] ? [fmt(rr[1], name)] : [])]);
-  }, [inputLocked, addMessage, juliaSends, resetReactivation]);
-
-  /* ── Restart ── */
-  const handleRestart = useCallback(() => {
-    clearState();
-    setMessages([]);
-    setStage(-1);
-    setUserName("");
-    setInputVal("");
-    stageRef.current = -1;
-    nameRef.current = "";
-    if (reactivationRef.current) clearTimeout(reactivationRef.current);
-    setTimeout(() => startFunnel(), 800);
-  }, [startFunnel]);
-
-  /* ── Keyboard send ── */
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleUserSend(inputVal);
-    }
-  };
-
-  /* ── Auto-resize textarea ── */
-  const handleInputChange = (e) => {
-    setInputVal(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-  };
-
-  /* ── Render messages ── */
-  const renderMessage = (msg, idx) => {
-    if (msg.type === "image") return <ImageBubble key={idx} src={CONFIG.hookImage} />;
-    if (msg.type === "cta")   return <CtaBubble key={idx} text={msg.text} btnText={msg.btnText || CONFIG.ctaButtonText} link={msg.link || CONFIG.ctaLink} />;
-    return <TextBubble key={idx} msg={msg} />;
-  };
-
-  /* ── Today label ── */
-  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-
-  return (
-    <div className="app-shell">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <img
-            className="sidebar-avatar"
-            src={CONFIG.atendenteAvatar}
-            alt={CONFIG.atendenteName}
-          />
-          <span className="sidebar-title">{CONFIG.atendenteName}</span>
-        </div>
-        <div className="sidebar-body">
-          Selecione um chat<br />para começar a conversar
-        </div>
-      </aside>
-
-      {/* Chat pane */}
-      <main className="chat-pane">
-        {/* Header */}
-        <div className="chat-header">
-          <img
-            className="chat-header-avatar"
-            src={CONFIG.atendenteAvatar}
-            alt={CONFIG.atendenteName}
-          />
-          <div className="chat-header-info">
-            <div className="chat-header-name">{CONFIG.atendenteName}</div>
-            <div className={`chat-header-status ${isTyping ? "typing" : ""}`}>
-              {isTyping ? "digitando..." : headerStatus}
-            </div>
-          </div>
-          <button className="restart-btn" onClick={handleRestart} title="Reiniciar conversa">
-            ↺ reiniciar
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="messages-area">
-          <div className="date-separator">
-            <span>Hoje — {today}</span>
-          </div>
-
-          {messages.map((msg, idx) => renderMessage(msg, idx))}
-
-          {isTyping && <TypingIndicator />}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="input-area">
-          <textarea
-            ref={inputRef}
-            className="input-field"
-            placeholder="Digite uma mensagem"
-            value={inputVal}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
- 
+      if (!isPositive(text)) {
+        // Resposta ambígua que não é nem positiva nem negativa → redireciona
+        const rr = pick(CONFIG.redirectResponses);
+        await juliaSends([fmt(rr[0], name), ...(rr[1] ? [fmt(rr[1], name)] : [])]);
+       
