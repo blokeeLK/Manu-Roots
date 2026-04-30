@@ -562,8 +562,27 @@ function App() {
 
     // ── Stage 0: capture name ──────────────────────────────────────
     if (s === 0) {
-      const receivedName = text.trim().split(" ")[0];
-      const capitalized = receivedName.charAt(0).toUpperCase() + receivedName.slice(1).toLowerCase();
+      // Remove frases comuns antes do nome
+      const prefixes = [
+        /^pode me chamar de\s+/i,
+        /^me chama de\s+/i,
+        /^me chamo\s+/i,
+        /^meu nome é\s+/i,
+        /^meu nome e\s+/i,
+        /^eu sou\s+/i,
+        /^sou\s+/i,
+        /^é\s+/i,
+        /^e\s+/i,
+      ];
+      let cleaned = text.trim();
+      for (const prefix of prefixes) {
+        cleaned = cleaned.replace(prefix, "");
+        if (cleaned !== text.trim()) break;
+      }
+      // Pega só o primeiro nome
+      const firstName = cleaned.trim().split(/\s+/)[0];
+      // Capitaliza corretamente (suporte a acentos)
+      const capitalized = firstName.charAt(0).toLocaleUpperCase("pt-BR") + firstName.slice(1).toLocaleLowerCase("pt-BR");
       setUserName(capitalized);
       nameRef.current = capitalized;
       setStage(1);
@@ -759,30 +778,4 @@ function App() {
             value={inputVal}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            rows={1}
-            disabled={inputLocked}
-          />
-          <button
-            className="send-btn"
-            onClick={() => handleUserSend(inputVal)}
-            disabled={inputLocked || !inputVal.trim()}
-            aria-label="Enviar"
-          >
-            ➤
-          </button>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ── sleep util ── */
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/* ── Mount ── */
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
-</body>
-</html>
+ 
