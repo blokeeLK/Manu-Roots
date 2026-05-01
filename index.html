@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chat - Julia</title>
 
+<!-- Utmify Pixel — rastreamento de audiência e conversões -->
+<script>
+  window.pixelId = "69ed1ffcc6ea276bad70c211";
+  var a = document.createElement("script");
+  a.setAttribute("async", "");
+  a.setAttribute("defer", "");
+  a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+  document.head.appendChild(a);
+</script>
+<script
+  src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+  data-utmify-prevent-xcod-sck
+  data-utmify-prevent-subids
+  async
+  defer
+></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -67,7 +84,8 @@ var CONFIG = {
   name: "Manu Roots",
   avatar: "https://i.ibb.co/hx16wDxw/coloque-como-se-ela-estivesse-202604301729.jpg",
   hookImage: "https://i.ibb.co/9myc8WTd/FOTO-24.jpg",
-  remarketingHookImage: "https://i.ibb.co/Xf3wVKzL/FOTO-17.jpg",
+  remarketingHookImage: "https://i.ibb.co/5X7krJz7/foto-4.jpg",
+  hotRemarketingOfferImage: "https://i.ibb.co/CsPzxBhz/FOTO-21.jpg",
   ctaLink: "https://influencer-iryh.onrender.com/",
   ctaBtn: "LIBERAR MEU ACESSO AGORA",
   typingDelayMin: 4000,
@@ -166,12 +184,51 @@ var CONFIG = {
   pos:["sim","quero","pode","claro","manda","ok","bora","uhum","pode sim","quero ver",
        "mostra","manda ai","manda sim","vamos","to dentro","logico","okay","s","ss","sss",
        "kkk","rs","haha","yeah","yep","yes","boa","massa","show","top","beleza","aguento",
-       "consigo","vou","ta","certeza","pfv","plz","com certeza","vai","vou sim","manda logo"],
+       "consigo","vou","ta","certeza","pfv","plz","com certeza","vai","vou sim","manda logo",
+       "link","manda o link","me manda","me manda o link","acesso","libera","quero acesso"],
   neg:["nao","n","nao quero","agora nao","depois","sai fora","melhor nao","nao precisa",
        "nao to","nem","nunca","jamais","nope","nop","nn","nao quero ver","nao obrigado"],
   hes:["nao sei","talvez","vou pensar","depois vejo","caro","tenho duvida","to pensando",
        "calma","pera","espera","depende","sei la","hm","hmm","acho que","sera","quanto",
        "dinheiro","nao agora"]
+};
+
+// Fluxo de remarketing quente — ativado quando returnCount > 2
+var HOT_REMARKETING = {
+  welcome:[
+    ["Voce voltou de novo 😏","Acho que ficou curiosidade ai, ne?"],
+    ["Hmm... voce de novo por aqui 😏","Isso me diz muita coisa..."],
+    ["Ja sabia que voce ia voltar 😏","A curiosidade fala mais alto, ne?"]
+  ],
+  // Resposta quando cliente mostra interesse/positivo → mostrar prévia
+  offerLines:[
+    "Separei essa previa so pra quem voltou mais de uma vez.",
+    "Mas o acesso completo fica liberado so por aqui 👇"
+  ],
+  offerCta:"Quer que eu libere seu acesso agora?",
+  // Resposta para dúvida sobre preço
+  priceLines:[
+    "Hoje ta saindo por um valor bem mais baixo do que o normal.",
+    "Voce entra, libera o acesso e ja consegue ver tudo na hora."
+  ],
+  priceCta:"Clica aqui e garante agora antes que saia essa condicao.",
+  // Resposta para hesitação
+  hesLines:[
+    "Pode pensar sim… mas como voce ja voltou mais de uma vez, provavelmente voce ja sabe que quer ver 😏",
+    "Melhor garantir agora enquanto ainda ta liberado."
+  ],
+  hesCta:"Quer que eu te mande o acesso?",
+  // Fechamento quando cliente confirma
+  closeLines:[
+    "Pronto, vou te mandar o acesso agora.",
+    "E so clicar e liberar 👇"
+  ],
+  // Neg suave
+  negLines:[
+    ["Tudo bem…","Mas voce ja voltou mais de uma vez, isso ja diz algo 😏"],
+    ["Relaxa, sem pressao…","A oferta ainda ta aqui quando voce quiser."],
+    ["Tudo bem mesmo…","Mas confesso que acho que voce ia gostar do que preparei pra voce."]
+  ]
 };
 
 var REMARKETING = {
@@ -230,6 +287,16 @@ function randDelay(){var mn=CONFIG.typingDelayMin,mx=CONFIG.typingDelayMax;retur
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function fmt(t,n){var nm=(n&&n.trim()&&n!=="undefined"&&n!=="null")?n:"";var r=t.replace(/\{n\},\s*/g,nm?nm+", ":"");r=r.replace(/\{n\}/g,nm);r=r.replace(/\s{2,}/g," ");r=r.replace(/^\s+/,"");return r;}
 function tnow(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
+
+// Dispara evento de conversão no pixel Utmify — usado no clique do botão de compra
+function trackInitiateCheckout(){
+  try{
+    // Utmify pixel expõe o PixelManager após carregamento do pixel.js
+    if(window.PixelManager&&window.PixelManager.track){
+      window.PixelManager.track("InitiateCheckout",{currency:"BRL"});
+    }
+  }catch(e){}
+}
 
 var CONTEXT_REPLIES={
   elogio:["Ahh… assim você me deixa sem graça 😳","Você fala assim e eu fico toda boba 😅","Gostei de você falando assim ❤️"],
@@ -315,7 +382,7 @@ function extractName(t){
 
 var SKEY="julia_v5";
 function loadState(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);}catch(e){}return null;}
-function saveState(m,s,n,rc){try{localStorage.setItem(SKEY,JSON.stringify({messages:m,stage:s,name:n,reactivations:rc||0}));}catch(e){}}
+function saveState(m,s,n,rc,retCnt){try{localStorage.setItem(SKEY,JSON.stringify({messages:m,stage:s,name:n,reactivations:rc||0,returnCount:retCnt||0}));}catch(e){}}
 
 
 function isReturning(){
@@ -346,12 +413,17 @@ function Cta(p){
   return React.createElement("div",{className:"row in"},
     React.createElement("div",{className:"ctab"},
       React.createElement("div",{className:"ctab-txt"},p.text),
-      React.createElement("a",{className:"ctab-btn",href:CONFIG.ctaLink,target:"_blank",rel:"noopener noreferrer"},CONFIG.ctaBtn)));
+      React.createElement("a",{className:"ctab-btn",href:CONFIG.ctaLink,target:"_blank",rel:"noopener noreferrer",onClick:trackInitiateCheckout},CONFIG.ctaBtn)));
 }
 
 function App(){
   var sv=loadState();
   var returning=isReturning();
+  // Incrementa returnCount a cada visita de retorno
+  var savedRetCnt=sv?(sv.returnCount||0):0;
+  var initRetCnt=returning?savedRetCnt+1:savedRetCnt;
+  // hot_remarketing = returnCount > 2 (4ª visita em diante)
+  var initFlow=returning?(initRetCnt>2?"hot_remarketing":"remarketing"):"normal";
 
   var _s=useState(returning?50:(sv?sv.stage:-1)),stage=_s[0],setStage=_s[1];
   var _n=useState(sv?sv.name:""),uname=_n[0],setUname=_n[1];
@@ -366,17 +438,18 @@ function App(){
   var stgRef=useRef(returning?50:(sv?sv.stage:-1));
   var nmRef=useRef(sv?sv.name:"");
   var rcRef=useRef(sv?sv.reactivations||0:0);
-  var ftRef=useRef(returning?"remarketing":"normal");
-  // rmStageRef: 0=welcome sent; 1=r2+r3 sent; 2=img+r4+r5 sent; 3=CTA sent
+  var retCntRef=useRef(initRetCnt);
+  var ftRef=useRef(initFlow);
+  // rmStageRef: estágios do remarketing normal
   var rmStageRef=useRef(0);
-
-  console.log("Flow:", ftRef.current, "| Name:", nmRef.current, "| rmStage:", rmStageRef.current);
+  // hrRef: estágios do hot remarketing (lead quente, returnCount > 2)
+  var hrRef=useRef(0);
 
   useEffect(function(){stgRef.current=stage;},[stage]);
   useEffect(function(){nmRef.current=uname;},[uname]);
   useEffect(function(){rcRef.current=reactivations;},[reactivations]);
   useEffect(function(){if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
-  useEffect(function(){saveState(msgs,stage,uname,reactivations);},[msgs,stage,uname,reactivations]);
+  useEffect(function(){saveState(msgs,stage,uname,reactivations,retCntRef.current);},[msgs,stage,uname,reactivations]);
 
   var addMsg=useCallback(function(m){setMsgs(function(p){return p.concat([m]);});},[]);
 
@@ -390,7 +463,7 @@ function App(){
         setStatus("digitando...");setTyping(true);
         sleep(randDelay()).then(function(){
           setTyping(false);setStatus("online");
-          if(line&&line.type==="img") addMsg({type:"img"});
+          if(line&&line.type==="img") addMsg({type:"img",src:line.src||""});
           else if(line&&line.type==="cta") addMsg({type:"cta",text:line.text});
           else addMsg({from:"julia",text:line,time:tnow(),type:"txt"});
           if(i<lines.length) sleep(CONFIG.betweenMessagesDelay).then(next);
@@ -604,6 +677,87 @@ function App(){
     var p8=pick(REMARKETING.r8);sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
   },[sendBot]);
 
+  // --- HOT REMARKETING (lead quente — returnCount > 2) ---
+  // Fluxo inteligente com branching por intent. Máximo 1 bloco por turno.
+  var advanceHotRemarketingFunnel=useCallback(function(text){
+    var hr=hrRef.current,n=nmRef.current;
+    var intent=detectIntent(text);
+    var ctx=detectContext(text);
+    var isPrice=ctx==="preco";
+
+    // hr=0: cliente respondeu à saudação inicial
+    if(hr===0){
+      if(isPrice){
+        // Perguntou preço direto → dar valor + CTA direto
+        hrRef.current=3;
+        sendBot([
+          HOT_REMARKETING.priceLines[0],
+          HOT_REMARKETING.priceLines[1],
+          {type:"cta",text:HOT_REMARKETING.priceCta}
+        ]);
+        return;
+      }
+      if(intent==="neg"){
+        // Negativa → suave, sem pressão
+        var pn=pick(HOT_REMARKETING.negLines);
+        sendBot([pn[0]].concat(pn[1]?[pn[1]]:[]));
+        // mantém hr=0, espera próxima mensagem
+        return;
+      }
+      if(intent==="hes"){
+        // Hesitação → pressão leve com urgência
+        hrRef.current=2;
+        sendBot([
+          HOT_REMARKETING.hesLines[0],
+          HOT_REMARKETING.hesLines[1],
+          HOT_REMARKETING.hesCta
+        ]);
+        return;
+      }
+      // pos ou qualquer outra resposta → mostrar prévia + CTA
+      hrRef.current=2;
+      sendBot([
+        {type:"img",src:CONFIG.hotRemarketingOfferImage},
+        HOT_REMARKETING.offerLines[0],
+        HOT_REMARKETING.offerLines[1],
+        {type:"cta",text:HOT_REMARKETING.offerCta}
+      ]);
+      return;
+    }
+
+    // hr=1 ou hr=2: cliente já viu prévia ou hesitação, respondendo
+    if(hr<=2){
+      if(isPrice){
+        hrRef.current=3;
+        sendBot([
+          HOT_REMARKETING.priceLines[0],
+          HOT_REMARKETING.priceLines[1],
+          {type:"cta",text:HOT_REMARKETING.priceCta}
+        ]);
+        return;
+      }
+      if(intent==="neg"){
+        hrRef.current=3;
+        sendBot([
+          "Tudo bem… a oferta ainda ta aqui se mudar de ideia 😌",
+          {type:"cta",text:"O acesso esta liberado. Clica aqui quando quiser."}
+        ]);
+        return;
+      }
+      // pos ou hes → fechar
+      hrRef.current=3;
+      sendBot([
+        HOT_REMARKETING.closeLines[0],
+        HOT_REMARKETING.closeLines[1],
+        {type:"cta",text:"Clica aqui e entra agora 👇"}
+      ]);
+      return;
+    }
+
+    // hr>=3: urgência final
+    sendBot([{type:"cta",text:"O acesso ainda ta liberado. Nao perde essa chance 👇"}]);
+  },[sendBot]);
+
   var handleSend=useCallback(function(text){
     if(!text.trim()||locked)return;
     addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
@@ -612,31 +766,45 @@ function App(){
     // Espera 4s, depois mostra digitando, depois envia 1 mensagem do funil.
     // Sem AI reply intermediário — garante no máximo 1 resposta por turno.
     sleep(CONFIG.responseStartDelay).then(function(){
+      if(ftRef.current==="hot_remarketing") return advanceHotRemarketingFunnel(text);
       if(ftRef.current==="remarketing") return advanceRemarketingFunnel(text);
-      else return advanceFunnel(text);
+      return advanceFunnel(text);
     });
-  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT]);
+  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,advanceHotRemarketingFunnel,resetRT]);
 
   // --- INIT ---
   useEffect(function(){
     var sv3=loadState();
     var ret=!!(sv3&&sv3.name&&sv3.messages&&sv3.messages.length>0);
     if(ret){
-      ftRef.current="remarketing";
-      rmStageRef.current=0;
       var n=sv3.name;
       nmRef.current=n;
-      setTimeout(function(){
-        var rp=pick(REMARKETING.r0);
-        sendBot([fmt(rp[0],n)].concat(rp[1]?[fmt(rp[1],n)]:[])).then(function(){
-          return sleep(CONFIG.betweenMessagesDelay);
-        }).then(function(){
-          var rp2=pick(REMARKETING.r1);
-          sendBot([fmt(rp2[0],n)].concat(rp2[1]?[fmt(rp2[1],n)]:[]));
-        });
-      },CONFIG.responseStartDelay);
+      var retCnt=retCntRef.current; // já incrementado no topo do App()
+      if(retCnt>2){
+        // Lead quente: 4ª visita ou mais → hot remarketing
+        ftRef.current="hot_remarketing";
+        hrRef.current=0;
+        setTimeout(function(){
+          var hw=pick(HOT_REMARKETING.welcome);
+          sendBot([fmt(hw[0],n),fmt(hw[1],n)]);
+        },CONFIG.responseStartDelay);
+      } else {
+        // Retorno normal → remarketing padrão
+        ftRef.current="remarketing";
+        rmStageRef.current=0;
+        setTimeout(function(){
+          var rp=pick(REMARKETING.r0);
+          sendBot([fmt(rp[0],n)].concat(rp[1]?[fmt(rp[1],n)]:[])).then(function(){
+            return sleep(CONFIG.betweenMessagesDelay);
+          }).then(function(){
+            var rp2=pick(REMARKETING.r1);
+            sendBot([fmt(rp2[0],n)].concat(rp2[1]?[fmt(rp2[1],n)]:[]));
+          });
+        },CONFIG.responseStartDelay);
+      }
     } else {
-      ftRef.current="normal";      setTimeout(function(){
+      ftRef.current="normal";
+      setTimeout(function(){
         var pair=pick(CONFIG.funnel.s0);
         sendBot(pair);setStage(0);
       },CONFIG.responseStartDelay);
