@@ -268,6 +268,31 @@ function getContextReply(ctx){
   var arr=CONTEXT_REPLIES[ctx];
   return arr[Math.floor(Math.random()*arr.length)];
 }
+var LOCAL_FALLBACK={
+  elogio:"Ahh… assim você me deixa sem graça 😳",
+  duvida:"Eu entendo, meu bem… sem pressão 😅",
+  curiosidade:"Calma… já tô chegando nessa parte 🙈",
+  preco:"Tá com um valor bem baixinho hoje ❤️",
+  desconfianca:"Eu entendo você perguntar, hoje tem muita coisa estranha mesmo 😅",
+  negativa:"Tudo bem… não vou forçar 😌",
+  positiva:"Sabia que você ia ficar curioso 😅"
+};
+function getAIContextReply(message,stage,flowType,customerName,ctx){
+  return fetch('/api/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      message:message,
+      stage:stage,
+      flowType:flowType||'normal',
+      customerName:customerName||'',
+      context:ctx||'generica'
+    })
+  })
+  .then(function(res){if(!res.ok)throw new Error('api_error');return res.json();})
+  .then(function(data){return data.reply||null;})
+  .catch(function(){return LOCAL_FALLBACK[ctx]||"Gostei do seu jeito de falar 😅";});
+}
 
 function detectIntent(text){
   var s=text.toLowerCase().trim();
@@ -546,18 +571,23 @@ function App(){
     addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
     setInp("");resetRT();
     setLocked(true);
+    var s=stgRef.current;
+    var ctx=detectContext(text);
+    var aiPromise=(s!==0)
+      ?getAIContextReply(text,s,ftRef.current,nmRef.current,ctx)
+      :Promise.resolve(null);
     sleep(CONFIG.responseStartDelay).then(function(){
-      var ctx=detectContext(text);
-      var ctxReply=(stgRef.current!==0)?getContextReply(ctx):null;
       var runFunnel=function(){
         if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
         else advanceFunnel(text);
       };
-      if(ctxReply){
-        sendBot([ctxReply]).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(runFunnel);
-      } else {
-        runFunnel();
-      }
+      return aiPromise.then(function(ctxReply){
+        if(ctxReply){
+          return sendBot([ctxReply]).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(runFunnel);
+        } else {
+          return runFunnel();
+        }
+      });
     });
   },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT,sendBot]);
 
