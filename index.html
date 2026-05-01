@@ -38,7 +38,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .bub.in{background:var(--bg-in);border-top-left-radius:0}
 .bub.out{background:var(--bg-out);border-top-right-radius:0}
 .btime{font-size:11px;color:var(--time);float:right;margin-left:8px;margin-top:2px;line-height:1}
-.bchk{font-size:11px;color:#53bdeb;margin-left:2px}
+.bchk{font-size:11px;color:#53bdeb;margin-left:2px;letter-spacing:-2px}
 .bimg{max-width:280px;border-radius:8px;overflow:hidden;animation:fi .2s ease}
 .bimg img{width:100%;display:block}
 .ctab{background:var(--bg-in);border-radius:8px;border-top-left-radius:0;overflow:hidden;max-width:70%;animation:fi .2s ease}
@@ -70,9 +70,10 @@ var CONFIG = {
   remarketingHookImage: "https://i.ibb.co/Xf3wVKzL/FOTO-17.jpg",
   ctaLink: "https://influencer-iryh.onrender.com/",
   ctaBtn: "LIBERAR MEU ACESSO AGORA",
-  typingDelayMin: 2500,
-  typingDelayMax: 6500,
-  betweenMessagesDelay: 1600,
+  typingDelayMin: 5000,
+  typingDelayMax: 5000,
+  betweenMessagesDelay: 5000,
+  userResponseDelay: 5000,
   reactivationDelay: 300000,
   maxReactivations: 2,
   funnel: {
@@ -271,7 +272,7 @@ function Bubble(p){
   return React.createElement("div",{className:"row "+dir},
     React.createElement("div",{className:"bub "+dir},m.text,
       React.createElement("span",{className:"btime"},m.time,
-        m.from==="user"&&React.createElement("span",{className:"bchk"}," vv"))));
+        m.from==="user"&&React.createElement("span",{className:"bchk"},"✓✓"))));
 }
 function Img(p){
   var src=p&&p.src?p.src:CONFIG.hookImage;
@@ -526,8 +527,12 @@ function App(){
     if(!text.trim()||locked)return;
     addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
     setInp("");resetRT();
-    if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
-    else advanceFunnel(text);
+    setLocked(true);setStatus("digitando...");setTyping(true);
+    sleep(CONFIG.userResponseDelay).then(function(){
+      setTyping(false);setStatus("online");setLocked(false);
+      if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
+      else advanceFunnel(text);
+    });
   },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT]);
 
   // --- INIT ---
@@ -547,12 +552,12 @@ function App(){
           var rp2=pick(REMARKETING.r1);
           sendBot([fmt(rp2[0],n)].concat(rp2[1]?[fmt(rp2[1],n)]:[]));
         });
-      },800);
+      },1000);
     } else {
       ftRef.current="normal";      setTimeout(function(){
         var pair=pick(CONFIG.funnel.s0);
         sendBot(pair);setStage(0);
-      },800);
+      },1000);
     }
     resetRT();
     return function(){if(rtRef.current)clearTimeout(rtRef.current);};
