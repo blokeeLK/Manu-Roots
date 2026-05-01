@@ -827,7 +827,7 @@ function App(){
       React.createElement("div",{className:"ch-info"},
         React.createElement("div",{className:"ch-name"},CONFIG.name),
         React.createElement("div",{className:"ch-status"+(typing?" typing":"")},typing?"digitando...":status)),
-      React.createElement("button",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"14px",cursor:"pointer",padding:"4px 8px"},title:"Reiniciar conversa",onClick:function(){localStorage.clear();window.location.reload();}},"\u21BA")),
+      ),
     React.createElement("div",{className:"msgs"},
       React.createElement("div",{className:"dsep"},React.createElement("span",null,"Hoje - "+today)),
       msgs.map(function(m,i){return renderMsg(m,i);}),
