@@ -66,6 +66,7 @@ var CONFIG = {
   name: "Manu Roots",
   avatar: "https://i.ibb.co/hx16wDxw/coloque-como-se-ela-estivesse-202604301729.jpg",
   hookImage: "https://i.ibb.co/9myc8WTd/FOTO-24.jpg",
+  remarketingHookImage: "https://i.ibb.co/Xf3wVKzL/FOTO-17.jpg",
   ctaLink: "https://influencer-iryh.onrender.com/",
   ctaBtn: "LIBERAR MEU ACESSO AGORA",
   typingDelayMin: 2500,
@@ -271,9 +272,10 @@ function Bubble(p){
       React.createElement("span",{className:"btime"},m.time,
         m.from==="user"&&React.createElement("span",{className:"bchk"}," vv"))));
 }
-function Img(){
+function Img(p){
+  var src=p&&p.src?p.src:CONFIG.hookImage;
   return React.createElement("div",{className:"row in"},
-    React.createElement("div",{className:"bimg"},React.createElement("img",{src:CONFIG.hookImage,alt:""})));
+    React.createElement("div",{className:"bimg"},React.createElement("img",{src:src,alt:""})));
 }
 function Cta(p){
   return React.createElement("div",{className:"row in"},
@@ -399,7 +401,7 @@ function App(){
       if(intent==="redirect"){var rr=pick(CONFIG.redirect);sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
       setStage(7);
       var p7=pick(CONFIG.funnel.s7);
-      sendBot([{type:"img"}]).then(function(){
+      sendBot([{type:"img",src:CONFIG.hookImage}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         return sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
@@ -481,7 +483,7 @@ function App(){
       if(intent==="hes"){var hr=pick(CONFIG.hesitation);sendBot([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
       // pos or redirect = proceed to image
       rmStageRef.current=2;
-      sendBot([{type:"img"}]).then(function(){
+      sendBot([{type:"img",src:CONFIG.remarketingHookImage}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p4=pick(REMARKETING.r4);
@@ -557,7 +559,7 @@ function App(){
   },[]);
 
   function renderMsg(m,i){
-    if(m.type==="img") return React.createElement(Img,{key:i});
+    if(m.type==="img") return React.createElement(Img,{key:i,src:m.src});
     if(m.type==="cta") return React.createElement(Cta,{key:i,text:m.text});
     return React.createElement(Bubble,{key:i,msg:m});
   }
