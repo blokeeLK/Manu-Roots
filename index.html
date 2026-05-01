@@ -367,7 +367,7 @@ function App(){
     var intent=detectIntent(text);
     if(s===0){
       var nm=extractName(text);
-      setUname(nm);nmRef.current=nm;setStage(1););}
+      setUname(nm);nmRef.current=nm;setStage(1);
       var p=pick(CONFIG.funnel.s1);
       sendBot([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[])).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
@@ -450,7 +450,7 @@ function App(){
       }
       if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
       if(intent==="redirect"){var rr2=pick(CONFIG.redirect);sendBot([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
-      setStage(11););}
+      setStage(11);
       var p11=pick(CONFIG.funnel.s11);
       sendBot([{type:"cta",text:fmt(p11.join("\n"),n)}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
@@ -521,7 +521,7 @@ function App(){
         return;
       }
       if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
-      rmStageRef.current=3;);}
+      rmStageRef.current=3;
       var p6=pick(REMARKETING.r6);
       sendBot([{type:"cta",text:fmt(p6[0],n)}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
@@ -550,7 +550,7 @@ function App(){
       ftRef.current="remarketing";
       rmStageRef.current=0;
       var n=sv3.name;
-      nmRef.current=n;);}
+      nmRef.current=n;
       setTimeout(function(){
         var rp=pick(REMARKETING.r0);
         sendBot([fmt(rp[0],n)].concat(rp[1]?[fmt(rp[1],n)]:[])).then(function(){
