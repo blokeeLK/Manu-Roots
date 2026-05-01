@@ -173,24 +173,24 @@ var CONFIG = {
 
 var REMARKETING = {
   r0:[
-    ["Oi, {n}... sumiu de boa? \uD83D\uDC40","Eu ainda to aqui... lembrava de voce \uD83D\uDE05"],
-    ["Ei... foi voce que estava aqui antes ne? \uD83D\uDC40","Pensei que tinha sumido de vez \uD83D\uDE05"],
-    ["Oi {n}... que bom que voltou \u2764\uFE0F","Pensei que voce tinha desaparecido \uD83D\uDC40"]
+    ["{n}... voce voltou mesmo \u2764\uFE0F","Eu sabia que voce ia aparecer de novo \uD83D\uDC40"],
+    ["Hmm... voce voltou \uD83D\uDC40","Eu tava pensando em voce..."],
+    ["Olha so quem apareceu de novo \uD83D\uDE05","Nao conseguiu ficar longe ne..."]
   ],
   r1:[
-    ["Fiquei esperando voce voltar... \uD83D\uDC40"],
-    ["To aqui ainda... esperando \u2764\uFE0F"],
-    ["Eu nao esqueci de voce nao \uD83D\uDE05"]
+    ["{n}, me fala a verdade... \uD83D\uDC40","Voce quase entrou ne \uD83D\uDE05"],
+    ["Normal... todo mundo fica curioso depois \uD83D\uDE05"],
+    ["Tem coisa que fica na cabeca ne... \uD83D\uDE33"]
   ],
   r2:[
-    ["Tenho uma coisa aqui que eu nao te mostrei da ultima vez... \uD83D\uDC40"],
-    ["Tem uma coisa que eu separei especialmente... \uD83D\uDE33"],
-    ["Guardei uma coisa aqui pra te mostrar... \uD83D\uDC40"]
+    ["Tem uma parte que eu nao te mostrei ainda... \uD83D\uDC40"],
+    ["Voce saiu bem na hora que tava ficando interessante \uD83D\uDE33"],
+    ["Voce parou antes da melhor parte \uD83D\uDE33"]
   ],
   r3:[
-    ["Posso te mostrar agora? \uD83D\uDE33"],
-    ["Da pra ver agora? \uD83D\uDC40"],
-    ["Voce ta pronto dessa vez? \uD83D\uDE05"]
+    ["Quer ver o que voce perdeu? \uD83D\uDC40"],
+    ["Mas dessa vez... nao foge \uD83D\uDE05"],
+    ["Eu pensei em nao te mostrar...","Mas voce voltou \u2764\uFE0F"]
   ],
   r4:[
     ["Eu confiei em voce de novo \uD83D\uDE48\u2764\uFE0F"],
@@ -198,19 +198,24 @@ var REMARKETING = {
     ["Dessa vez eu mando sem pensar muito \uD83D\uDE33"]
   ],
   r5:[
-    ["Isso ai e so o comecinho... \uD83D\uDC40","Dessa vez voce entra ou nao? \uD83D\uDE33"],
-    ["Ainda tem muito mais do que isso... \uD83D\uDE05","O link ta la te esperando de novo \uD83D\uDC40"],
-    ["O melhor ta guardado \uD83D\uDC40","Voce ja sabe o que tem la... \uD83D\uDE05"]
+    ["Agora voce entende porque eu falei \uD83D\uDE33"],
+    ["Voce quase saiu sem ver isso..."],
+    ["Imagina o resto entao..."]
   ],
   r6:[
-    ["Entao vai la de vez... \u2764\uFE0F"],
-    ["Dessa vez nao sai sem ver tudo \uD83D\uDC40"],
-    ["Va la agora que o link ainda ta aberto \uD83D\uDE05"]
+    ["{n}, voce ja chegou ate aqui duas vezes...","Nao faz sentido parar agora \uD83D\uDE05"],
+    ["Se voce voltou... e porque quer ver \uD83D\uDC40"],
+    ["Agora ficou dificil fingir que nao quer \uD83D\uDE33"]
   ],
   r7:[
-    ["Deixei por um valor especial ainda... \uD83D\uDE05"],
-    ["Pode fechar isso a qualquer hora... \uD83D\uDC40"],
-    ["Nao sei se vai continuar assim \uD83D\uDE33"]
+    ["Vai la... entra de verdade agora \u2764\uFE0F"],
+    ["Dessa vez nao para no meio...","Entra e ve tudo \uD83D\uDC40"],
+    ["{n}, voce ja demorou demais...","Agora vai ate o final \uD83D\uDE05"]
+  ],
+  r8:[
+    ["Isso pode nao estar aqui depois... \uD83D\uDC40"],
+    ["Eu nao deixo isso aberto por muito tempo..."],
+    ["Se sair de novo... pode nao voltar \uD83D\uDE33"]
   ]
 };
 </script>
@@ -220,7 +225,7 @@ var useState=React.useState,useEffect=React.useEffect,useRef=React.useRef,useCal
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function randDelay(){var mn=CONFIG.typingDelayMin,mx=CONFIG.typingDelayMax;return mn+Math.random()*(mx-mn);}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function fmt(t,n){return t.replace(/\{n\}/g,n||"voce");}
+function fmt(t,n){var nm=(n&&n.trim()&&n!=="undefined"&&n!=="null")?n:"";var r=t.replace(/\{n\},\s*/g,nm?nm+", ":"");r=r.replace(/\{n\}/g,nm);r=r.replace(/\s{2,}/g," ");r=r.replace(/^\s+/,"");return r;}
 function tnow(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 
 function detectIntent(text){
@@ -511,7 +516,7 @@ function App(){
       });
       return;
     }
-    sendBot(["O link ainda ta la, "+n+" \u2764\uFE0F","Nao vai perder dessa vez ne \uD83D\uDC40"]);
+    var p8=pick(REMARKETING.r8);sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
   },[sendBot]);
 
   var handleSend=useCallback(function(text){
