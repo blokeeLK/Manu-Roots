@@ -231,6 +231,44 @@ function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function fmt(t,n){var nm=(n&&n.trim()&&n!=="undefined"&&n!=="null")?n:"";var r=t.replace(/\{n\},\s*/g,nm?nm+", ":"");r=r.replace(/\{n\}/g,nm);r=r.replace(/\s{2,}/g," ");r=r.replace(/^\s+/,"");return r;}
 function tnow(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 
+var CONTEXT_REPLIES={
+  elogio:["Ahh… assim você me deixa sem graça 😳","Você fala assim e eu fico toda boba 😅","Gostei de você falando assim ❤️"],
+  duvida:["Eu entendo, meu bem… sem pressão 😅","Calma… eu também iria querer ter certeza antes ❤️","Tudo bem ficar em dúvida… mas olha só uma coisa 👀"],
+  curiosidade:["Uma coisinha que eu quase não mostro assim 🙈","Eu ia te mostrar… mas fiquei meio sem graça 😅","Calma… já tô chegando nessa parte 👀"],
+  preco:["Tá com um valor bem baixinho hoje 😅","Eu deixei bem acessível pra quem entra agora ❤️","O acesso tá liberado por pouco tempo nesse valor 👀"],
+  desconfianca:["Eu entendo você desconfiar… hoje tem muita coisa estranha mesmo 😅","Relaxa, meu bem… eu deixei tudo certinho pra você ver com calma ❤️","Você pode entrar e conferir sem enrolação 👀"],
+  negativa:["Tudo bem… não vou forçar 😅","Eu entendo, meu bem ❤️","Relaxa… só achei que você ia gostar"],
+  positiva:["Sabia que você ia ficar curioso 😅","Então tá… mas não ri de mim 🙈","Gostei da sua coragem 👀"],
+  saudacao:["Oi, meu bem ❤️","Oi… você voltou bem na hora 😅","Hmm… gostei de te ver por aqui 👀"],
+  curta:["Você fala pouco, né? 😅","Gostei desse seu jeito quietinho 👀","Tá… então deixa eu continuar"]
+};
+function detectContext(text){
+  var s=text.toLowerCase().trim();
+  var cats=[
+    ["elogio",["linda","maravilhosa","gata","perfeita","bonita","princesa","lindona","delícia","delicia"]],
+    ["duvida",["dúvida","duvida","não sei","nao sei","talvez","pensando","pera","sem certeza"]],
+    ["curiosidade",["que coisa","quero ver","o que é","o que e","como assim","cadê","cade"]],
+    ["preco",["preço","preco","quanto custa","quanto é","quanto e","caro","barato","pagamento","pix","cartão","cartao"]],
+    ["desconfianca",["golpe","fake","confiável","confiavel","é real","e real","funciona mesmo"]],
+    ["negativa",["não quero","nao quero","agora não","agora nao","sai fora","melhor não","melhor nao"]],
+    ["positiva",["pode sim","com certeza","claro que","manda logo"]],
+    ["saudacao",["boa noite","bom dia","boa tarde","e aí","e ai"]],
+    ["curta",["tabom","aham","kkk","blz","haha"]]
+  ];
+  for(var i=0;i<cats.length;i++){
+    var name=cats[i][0],words=cats[i][1];
+    for(var j=0;j<words.length;j++){
+      if(s===words[j]||s.includes(words[j])) return name;
+    }
+  }
+  return null;
+}
+function getContextReply(ctx){
+  if(!ctx||!CONTEXT_REPLIES[ctx]) return null;
+  var arr=CONTEXT_REPLIES[ctx];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
 function detectIntent(text){
   var s=text.toLowerCase().trim();
   if(CONFIG.neg.some(function(k){return s===k||s.startsWith(k+" ")||s.endsWith(" "+k);})) return "neg";
@@ -390,16 +428,11 @@ function App(){
     }
     if(s===6){
       if(intent==="neg"){
-        var nr=pick(CONFIG.negative);
-        sendBot([fmt(nr[0],n)].concat(nr[1]?[fmt(nr[1],n)]:[])).then(function(){
-          return sleep(CONFIG.betweenMessagesDelay);
-        }).then(function(){
-          var p6b=pick(CONFIG.funnel.s6);
-          sendBot([fmt(p6b[0],n)].concat(p6b[1]?[fmt(p6b[1],n)]:[]));
-        });
+        var p6b=pick(CONFIG.funnel.s6);
+        sendBot([fmt(p6b[0],n)].concat(p6b[1]?[fmt(p6b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var hr=pick(CONFIG.hesitation);sendBot([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
+      if(intent==="hes"){var p6h=pick(CONFIG.funnel.s6);sendBot([fmt(p6h[0],n)].concat(p6h[1]?[fmt(p6h[1],n)]:[]));return;}
       if(intent==="redirect"){var rr=pick(CONFIG.redirect);sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
       setStage(7);
       var p7=pick(CONFIG.funnel.s7);
@@ -428,16 +461,11 @@ function App(){
     }
     if(s===10){
       if(intent==="neg"){
-        var nr2=pick(CONFIG.negative);
-        sendBot([fmt(nr2[0],n)].concat(nr2[1]?[fmt(nr2[1],n)]:[])).then(function(){
-          return sleep(CONFIG.betweenMessagesDelay);
-        }).then(function(){
-          var p10b=pick(CONFIG.funnel.s10);
-          sendBot([fmt(p10b[0],n)].concat(p10b[1]?[fmt(p10b[1],n)]:[]));
-        });
+        var p10b=pick(CONFIG.funnel.s10);
+        sendBot([fmt(p10b[0],n)].concat(p10b[1]?[fmt(p10b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
+      if(intent==="hes"){var p10h=pick(CONFIG.funnel.s10);sendBot([fmt(p10h[0],n)].concat(p10h[1]?[fmt(p10h[1],n)]:[]));return;}
       if(intent==="redirect"){var rr2=pick(CONFIG.redirect);sendBot([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
       setStage(11);
       var p11=pick(CONFIG.funnel.s11);
@@ -473,16 +501,11 @@ function App(){
     }
     if(rs===1){
       if(intent==="neg"){
-        var nr=pick(CONFIG.negative);
-        sendBot([fmt(nr[0],n)].concat(nr[1]?[fmt(nr[1],n)]:[])).then(function(){
-          return sleep(CONFIG.betweenMessagesDelay);
-        }).then(function(){
-          var p3b=pick(REMARKETING.r3);
-          sendBot([fmt(p3b[0],n)].concat(p3b[1]?[fmt(p3b[1],n)]:[]));
-        });
+        var p3b=pick(REMARKETING.r3);
+        sendBot([fmt(p3b[0],n)].concat(p3b[1]?[fmt(p3b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var hr=pick(CONFIG.hesitation);sendBot([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
+      if(intent==="hes"){var p3h=pick(REMARKETING.r3);sendBot([fmt(p3h[0],n)].concat(p3h[1]?[fmt(p3h[1],n)]:[]));return;}
       // pos or redirect = proceed to image
       rmStageRef.current=2;
       sendBot([{type:"img",src:CONFIG.remarketingHookImage}]).then(function(){
@@ -500,16 +523,11 @@ function App(){
     }
     if(rs===2){
       if(intent==="neg"){
-        var nr2=pick(CONFIG.negative);
-        sendBot([fmt(nr2[0],n)].concat(nr2[1]?[fmt(nr2[1],n)]:[])).then(function(){
-          return sleep(CONFIG.betweenMessagesDelay);
-        }).then(function(){
-          var p5b=pick(REMARKETING.r5);
-          sendBot([fmt(p5b[0],n)].concat(p5b[1]?[fmt(p5b[1],n)]:[]));
-        });
+        var p5b=pick(REMARKETING.r5);
+        sendBot([fmt(p5b[0],n)].concat(p5b[1]?[fmt(p5b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
+      if(intent==="hes"){var p5h=pick(REMARKETING.r5);sendBot([fmt(p5h[0],n)].concat(p5h[1]?[fmt(p5h[1],n)]:[]));return;}
       rmStageRef.current=3;
       var p6=pick(REMARKETING.r6);
       sendBot([{type:"cta",text:fmt(p6[0],n)}]).then(function(){
@@ -530,10 +548,19 @@ function App(){
     setLocked(true);setStatus("digitando...");setTyping(true);
     sleep(CONFIG.userResponseDelay).then(function(){
       setTyping(false);setStatus("online");setLocked(false);
-      if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
-      else advanceFunnel(text);
+      var ctx=detectContext(text);
+      var ctxReply=(stgRef.current!==0)?getContextReply(ctx):null;
+      var runFunnel=function(){
+        if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
+        else advanceFunnel(text);
+      };
+      if(ctxReply){
+        sendBot([ctxReply]).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(runFunnel);
+      } else {
+        runFunnel();
+      }
     });
-  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT]);
+  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT,sendBot]);
 
   // --- INIT ---
   useEffect(function(){
