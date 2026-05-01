@@ -70,10 +70,10 @@ var CONFIG = {
   remarketingHookImage: "https://i.ibb.co/Xf3wVKzL/FOTO-17.jpg",
   ctaLink: "https://influencer-iryh.onrender.com/",
   ctaBtn: "LIBERAR MEU ACESSO AGORA",
-  typingDelayMin: 5000,
-  typingDelayMax: 5000,
-  betweenMessagesDelay: 5000,
-  userResponseDelay: 5000,
+  typingDelayMin: 4000,
+  typingDelayMax: 4000,
+  betweenMessagesDelay: 4000,
+  userResponseDelay: 4000,
   reactivationDelay: 300000,
   maxReactivations: 2,
   funnel: {
@@ -547,7 +547,6 @@ function App(){
     setInp("");resetRT();
     setLocked(true);setStatus("digitando...");setTyping(true);
     sleep(CONFIG.userResponseDelay).then(function(){
-      setTyping(false);setStatus("online");setLocked(false);
       var ctx=detectContext(text);
       var ctxReply=(stgRef.current!==0)?getContextReply(ctx):null;
       var runFunnel=function(){
@@ -579,12 +578,12 @@ function App(){
           var rp2=pick(REMARKETING.r1);
           sendBot([fmt(rp2[0],n)].concat(rp2[1]?[fmt(rp2[1],n)]:[]));
         });
-      },1000);
+      },CONFIG.userResponseDelay);
     } else {
       ftRef.current="normal";      setTimeout(function(){
         var pair=pick(CONFIG.funnel.s0);
         sendBot(pair);setStage(0);
-      },1000);
+      },CONFIG.userResponseDelay);
     }
     resetRT();
     return function(){if(rtRef.current)clearTimeout(rtRef.current);};
