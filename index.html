@@ -279,26 +279,32 @@ function Cta(p){
 
 function App(){
   var sv=loadState();
-  var _s=useState(sv?sv.stage:-1),stage=_s[0],setStage=_s[1];
+  var returning=isReturning();
+
+  var _s=useState(returning?50:(sv?sv.stage:-1)),stage=_s[0],setStage=_s[1];
   var _n=useState(sv?sv.name:""),uname=_n[0],setUname=_n[1];
-  var _m=useState(sv?sv.messages:[]),msgs=_m[0],setMsgs=_m[1];
+  var _m=useState(returning?(sv?sv.messages:[]):[]),msgs=_m[0],setMsgs=_m[1];
   var _t=useState(false),typing=_t[0],setTyping=_t[1];
   var _i=useState(""),inp=_i[0],setInp=_i[1];
   var _l=useState(false),locked=_l[0],setLocked=_l[1];
   var _st=useState("online"),status=_st[0],setStatus=_st[1];
   var _rc=useState(sv?sv.reactivations||0:0),reactivations=_rc[0],setReactivations=_rc[1];
-  var _ft=useState(isReturning()?"remarketing":"normal"),flowType=_ft[0],setFlowType=_ft[1];
-  var ftRef=useRef(isReturning()?"remarketing":"normal");
 
   var endRef=useRef(null),inpRef=useRef(null),rtRef=useRef(null);
-  var stgRef=useRef(stage),nmRef=useRef(uname),rcRef=useRef(reactivations);
+  var stgRef=useRef(returning?50:(sv?sv.stage:-1));
+  var nmRef=useRef(sv?sv.name:"");
+  var rcRef=useRef(sv?sv.reactivations||0:0);
+  var ftRef=useRef(returning?"remarketing":"normal");
+  // rmStageRef: 0=welcome sent; 1=r2+r3 sent; 2=img+r4+r5 sent; 3=CTA sent
+  var rmStageRef=useRef(0);
+
+  console.log("Flow:", ftRef.current, "| Name:", nmRef.current, "| rmStage:", rmStageRef.current);
 
   useEffect(function(){stgRef.current=stage;},[stage]);
   useEffect(function(){nmRef.current=uname;},[uname]);
   useEffect(function(){rcRef.current=reactivations;},[reactivations]);
-  useEffect(function(){ftRef.current=flowType;},[flowType]);
   useEffect(function(){if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
-  useEffect(function(){if(msgs.length>0)saveState(msgs,stage,uname,reactivations);},[msgs,stage,uname,reactivations]);
+  useEffect(function(){saveState(msgs,stage,uname,reactivations);},[msgs,stage,uname,reactivations]);
 
   var addMsg=useCallback(function(m){setMsgs(function(p){return p.concat([m]);});},[]);
 
@@ -326,46 +332,19 @@ function App(){
   var resetRT=useCallback(function(){
     if(rtRef.current)clearTimeout(rtRef.current);
     rtRef.current=setTimeout(function(){
-      var s=stgRef.current,rc=rcRef.current;
-      if(s>=0&&s<11&&rc<CONFIG.maxReactivations){
-        var pair=pick(CONFIG.reactivation),n=nmRef.current;
+      var rc=rcRef.current,n=nmRef.current;
+      if(rc<CONFIG.maxReactivations){
+        var pair=pick(CONFIG.reactivation);
         setReactivations(function(r){return r+1;});
         sendBot([fmt(pair[0],n)].concat(pair[1]?[fmt(pair[1],n)]:[]));
       }
     },CONFIG.reactivationDelay);
   },[sendBot]);
 
-  var startFunnel=useCallback(function(){
-    if(stgRef.current!==-1)return;
-    var sv2=loadState();
-    if(sv2&&sv2.name&&sv2.messages&&sv2.messages.length>0){
-      setFlowType("remarketing");ftRef.current="remarketing";
-      setUname(sv2.name);nmRef.current=sv2.name;
-      setStage(50);stgRef.current=50;
-      var rp=pick(REMARKETING.r0);
-      sendBot([fmt(rp[0],sv2.name)].concat(rp[1]?[fmt(rp[1],sv2.name)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var rp2=pick(REMARKETING.r1);
-        sendBot([fmt(rp2[0],sv2.name)].concat(rp2[1]?[fmt(rp2[1],sv2.name)]:[]));setStage(51);
-      });
-      return;
-    }
-    setStage(0);
-    var pair=pick(CONFIG.funnel.s0);
-    sendBot(pair);
-  },[sendBot]);
-
-  useEffect(function(){
-    if(stage===-1)setTimeout(startFunnel,800);
-    resetRT();
-    return function(){if(rtRef.current)clearTimeout(rtRef.current);};
-  },[]);
-
+  // --- NORMAL FUNNEL ---
   var advanceFunnel=useCallback(function(text){
     var s=stgRef.current,n=nmRef.current;
     var intent=detectIntent(text);
-
     if(s===0){
       var nm=extractName(text);
       setUname(nm);nmRef.current=nm;setStage(1);
@@ -374,8 +353,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p2=pick(CONFIG.funnel.s2);
-        sendBot([fmt(p2[0],nm)].concat(p2[1]?[fmt(p2[1],nm)]:[]));
-        setStage(2);
+        sendBot([fmt(p2[0],nm)].concat(p2[1]?[fmt(p2[1],nm)]:[]));setStage(2);
       });
       return;
     }
@@ -386,8 +364,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p4=pick(CONFIG.funnel.s4);
-        sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
-        setStage(4);
+        sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));setStage(4);
       });
       return;
     }
@@ -398,8 +375,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p6=pick(CONFIG.funnel.s6);
-        sendBot([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[]));
-        setStage(6);
+        sendBot([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[]));setStage(6);
       });
       return;
     }
@@ -426,8 +402,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p8=pick(CONFIG.funnel.s8);
-        sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
-        setStage(8);
+        sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));setStage(8);
       });
       return;
     }
@@ -438,8 +413,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p10=pick(CONFIG.funnel.s10);
-        sendBot([fmt(p10[0],n)].concat(p10[1]?[fmt(p10[1],n)]:[]));
-        setStage(10);
+        sendBot([fmt(p10[0],n)].concat(p10[1]?[fmt(p10[1],n)]:[]));setStage(10);
       });
       return;
     }
@@ -462,8 +436,7 @@ function App(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p12=pick(CONFIG.funnel.s12);
-        sendBot([fmt(p12[0],n)].concat(p12[1]?[fmt(p12[1],n)]:[]));
-        setStage(12);
+        sendBot([fmt(p12[0],n)].concat(p12[1]?[fmt(p12[1],n)]:[]));setStage(12);
       });
       return;
     }
@@ -472,54 +445,73 @@ function App(){
     sendBot([fmt(rr3[0],n)].concat(rr3[1]?[fmt(rr3[1],n)]:[]));
   },[sendBot]);
 
-
+  // --- REMARKETING FUNNEL ---
+  // rmStageRef: 0=welcome sent, 1=r2+r3 sent, 2=img+r4+r5 sent, 3=CTA+r7 sent
   var advanceRemarketingFunnel=useCallback(function(text){
-    var s=stgRef.current,n=nmRef.current;
+    var rs=rmStageRef.current,n=nmRef.current;
     var intent=detectIntent(text);
-    if(s===51){
-      setStage(52);
+    console.log("RM stage:", rs, "| intent:", intent);
+    if(rs===0){
+      rmStageRef.current=1;
       var p2=pick(REMARKETING.r2);
       sendBot([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[])).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p3=pick(REMARKETING.r3);
-        sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));setStage(53);
+        sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
       });
       return;
     }
-    if(s===53){
-      if(intent==="neg"){var nr=pick(CONFIG.negative);sendBot([fmt(nr[0],n)].concat(nr[1]?[fmt(nr[1],n)]:[]));return;}
+    if(rs===1){
+      if(intent==="neg"){
+        var nr=pick(CONFIG.negative);
+        sendBot([fmt(nr[0],n)].concat(nr[1]?[fmt(nr[1],n)]:[])).then(function(){
+          return sleep(CONFIG.betweenMessagesDelay);
+        }).then(function(){
+          var p3b=pick(REMARKETING.r3);
+          sendBot([fmt(p3b[0],n)].concat(p3b[1]?[fmt(p3b[1],n)]:[]));
+        });
+        return;
+      }
       if(intent==="hes"){var hr=pick(CONFIG.hesitation);sendBot([fmt(hr[0],n)].concat(hr[1]?[fmt(hr[1],n)]:[]));return;}
-      setStage(54);
+      // pos or redirect = proceed to image
+      rmStageRef.current=2;
       sendBot([{type:"img"}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p4=pick(REMARKETING.r4);
-        return sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));  
+        return sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
       }).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p5=pick(REMARKETING.r5);
-        sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));setStage(55);
+        sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
       });
       return;
     }
-    if(s===55){
-      if(intent==="neg"){var nr2=pick(CONFIG.negative);sendBot([fmt(nr2[0],n)].concat(nr2[1]?[fmt(nr2[1],n)]:[]));return;}
+    if(rs===2){
+      if(intent==="neg"){
+        var nr2=pick(CONFIG.negative);
+        sendBot([fmt(nr2[0],n)].concat(nr2[1]?[fmt(nr2[1],n)]:[])).then(function(){
+          return sleep(CONFIG.betweenMessagesDelay);
+        }).then(function(){
+          var p5b=pick(REMARKETING.r5);
+          sendBot([fmt(p5b[0],n)].concat(p5b[1]?[fmt(p5b[1],n)]:[]));
+        });
+        return;
+      }
       if(intent==="hes"){var hr2=pick(CONFIG.hesitation);sendBot([fmt(hr2[0],n)].concat(hr2[1]?[fmt(hr2[1],n)]:[]));return;}
-      setStage(56);
+      rmStageRef.current=3;
       var p6=pick(REMARKETING.r6);
       sendBot([{type:"cta",text:fmt(p6[0],n)}]).then(function(){
         return sleep(CONFIG.betweenMessagesDelay);
       }).then(function(){
         var p7=pick(REMARKETING.r7);
-        sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));setStage(57);
+        sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
       });
       return;
     }
-    if(s>=57){sendBot(["O link ainda ta la, "+n+"\u2764\uFE0F","Nao perde essa chance"]);return;}
-    var rr=pick(CONFIG.redirect);
-    sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));  
+    sendBot(["O link ainda ta la, "+n+" \u2764\uFE0F","Nao vai perder dessa vez ne \uD83D\uDC40"]);
   },[sendBot]);
 
   var handleSend=useCallback(function(text){
@@ -529,6 +521,35 @@ function App(){
     if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
     else advanceFunnel(text);
   },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT]);
+
+  // --- INIT ---
+  useEffect(function(){
+    var sv3=loadState();
+    var ret=!!(sv3&&sv3.name&&sv3.messages&&sv3.messages.length>0);
+    if(ret){
+      ftRef.current="remarketing";
+      rmStageRef.current=0;
+      var n=sv3.name;
+      nmRef.current=n;
+      setTimeout(function(){
+        var rp=pick(REMARKETING.r0);
+        sendBot([fmt(rp[0],n)].concat(rp[1]?[fmt(rp[1],n)]:[])).then(function(){
+          return sleep(CONFIG.betweenMessagesDelay);
+        }).then(function(){
+          var rp2=pick(REMARKETING.r1);
+          sendBot([fmt(rp2[0],n)].concat(rp2[1]?[fmt(rp2[1],n)]:[]));
+        });
+      },800);
+    } else {
+      ftRef.current="normal";
+      setTimeout(function(){
+        var pair=pick(CONFIG.funnel.s0);
+        sendBot(pair);setStage(0);
+      },800);
+    }
+    resetRT();
+    return function(){if(rtRef.current)clearTimeout(rtRef.current);};
+  },[]);
 
   function renderMsg(m,i){
     if(m.type==="img") return React.createElement(Img,{key:i});
@@ -566,4 +587,3 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
 </script>
 </body>
-</html>
