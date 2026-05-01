@@ -414,155 +414,193 @@ function App(){
   },[sendBot]);
 
   // --- NORMAL FUNNEL ---
+  // Cada stage envia exatamente 1 bloco de mensagem e para.
+  // Só avança quando o cliente responde.
   var advanceFunnel=useCallback(function(text){
     var s=stgRef.current,n=nmRef.current;
     var intent=detectIntent(text);
+
+    // s=0: esperando o nome
     if(s===0){
       var nm=extractName(text);
       setUname(nm);nmRef.current=nm;setStage(1);
       var p=pick(CONFIG.funnel.s1);
-      sendBot([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p2=pick(CONFIG.funnel.s2);
-        sendBot([fmt(p2[0],nm)].concat(p2[1]?[fmt(p2[1],nm)]:[]));setStage(2);
-      });
+      sendBot([fmt(p[0],nm)].concat(p[1]?[fmt(p[1],nm)]:[]));
       return;
     }
+    // s=1: cliente reagiu ao elogio do nome → perguntar curiosidade
+    if(s===1){
+      setStage(2);
+      var p2=pick(CONFIG.funnel.s2);
+      sendBot([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[]));
+      return;
+    }
+    // s=2: cliente respondeu a curiosidade → observação de personalidade
     if(s===2){
       setStage(3);
       var p3=pick(CONFIG.funnel.s3);
-      sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p4=pick(CONFIG.funnel.s4);
-        sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));setStage(4);
-      });
+      sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
       return;
     }
+    // s=3: cliente reagiu → hook de atenção
+    if(s===3){
+      setStage(4);
+      var p4=pick(CONFIG.funnel.s4);
+      sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
+      return;
+    }
+    // s=4: cliente reagiu → teaser do conteúdo
     if(s===4){
       setStage(5);
       var p5=pick(CONFIG.funnel.s5);
-      sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p6=pick(CONFIG.funnel.s6);
-        sendBot([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[]));setStage(6);
-      });
+      sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
       return;
     }
+    // s=5: cliente reagiu ao teaser → pedir promessa
+    if(s===5){
+      setStage(6);
+      var p6=pick(CONFIG.funnel.s6);
+      sendBot([fmt(p6[0],n)].concat(p6[1]?[fmt(p6[1],n)]:[]));
+      return;
+    }
+    // s=6: aguardando promessa do cliente
     if(s===6){
       if(intent==="neg"){
-        var p6b=pick(CONFIG.funnel.s6);
-        sendBot([fmt(p6b[0],n)].concat(p6b[1]?[fmt(p6b[1],n)]:[]));
+        var pn=pick(CONFIG.negative);
+        sendBot([fmt(pn[0],n)].concat(pn[1]?[fmt(pn[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var p6h=pick(CONFIG.funnel.s6);sendBot([fmt(p6h[0],n)].concat(p6h[1]?[fmt(p6h[1],n)]:[]));return;}
-      if(intent==="redirect"){var rr=pick(CONFIG.redirect);sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));return;}
+      if(intent==="hes"){
+        var ph=pick(CONFIG.hesitation);
+        sendBot([fmt(ph[0],n)].concat(ph[1]?[fmt(ph[1],n)]:[]));
+        return;
+      }
+      if(intent==="redirect"){
+        var rr=pick(CONFIG.redirect);
+        sendBot([fmt(rr[0],n)].concat(rr[1]?[fmt(rr[1],n)]:[]));
+        return;
+      }
+      // pos: imagem + reação s7 em um único sendBot — input permanece bloqueado até o final
       setStage(7);
       var p7=pick(CONFIG.funnel.s7);
-      sendBot([{type:"img",src:CONFIG.hookImage}]).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        return sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
-      }).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p8=pick(CONFIG.funnel.s8);
-        sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));setStage(8);
-      });
+      sendBot([{type:"img",src:CONFIG.hookImage},fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
       return;
     }
+    // s=7: cliente viu a imagem → continuar aquecimento
+    if(s===7){
+      setStage(8);
+      var p8=pick(CONFIG.funnel.s8);
+      sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
+      return;
+    }
+    // s=8: cliente reagiu → criar desejo
     if(s===8){
       setStage(9);
       var p9=pick(CONFIG.funnel.s9);
-      sendBot([fmt(p9[0],n)].concat(p9[1]?[fmt(p9[1],n)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p10=pick(CONFIG.funnel.s10);
-        sendBot([fmt(p10[0],n)].concat(p10[1]?[fmt(p10[1],n)]:[]));setStage(10);
-      });
+      sendBot([fmt(p9[0],n)].concat(p9[1]?[fmt(p9[1],n)]:[]));
       return;
     }
+    // s=9: cliente reagiu → pergunta de decisão
+    if(s===9){
+      setStage(10);
+      var p10=pick(CONFIG.funnel.s10);
+      sendBot([fmt(p10[0],n)].concat(p10[1]?[fmt(p10[1],n)]:[]));
+      return;
+    }
+    // s=10: pergunta final de decisão
     if(s===10){
       if(intent==="neg"){
-        var p10b=pick(CONFIG.funnel.s10);
-        sendBot([fmt(p10b[0],n)].concat(p10b[1]?[fmt(p10b[1],n)]:[]));
+        var p10n=pick(CONFIG.negative);
+        sendBot([fmt(p10n[0],n)].concat(p10n[1]?[fmt(p10n[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var p10h=pick(CONFIG.funnel.s10);sendBot([fmt(p10h[0],n)].concat(p10h[1]?[fmt(p10h[1],n)]:[]));return;}
-      if(intent==="redirect"){var rr2=pick(CONFIG.redirect);sendBot([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));return;}
-      setStage(11);
+      if(intent==="hes"){
+        var p10h=pick(CONFIG.hesitation);
+        sendBot([fmt(p10h[0],n)].concat(p10h[1]?[fmt(p10h[1],n)]:[]));
+        return;
+      }
+      if(intent==="redirect"){
+        var rr2=pick(CONFIG.redirect);
+        sendBot([fmt(rr2[0],n)].concat(rr2[1]?[fmt(rr2[1],n)]:[]));
+        return;
+      }
+      // pos: CTA + urgência em um único sendBot — fechamento contínuo
+      setStage(12);
       var p11=pick(CONFIG.funnel.s11);
-      sendBot([{type:"cta",text:fmt(p11.join("\n"),n)}]).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p12=pick(CONFIG.funnel.s12);
-        sendBot([fmt(p12[0],n)].concat(p12[1]?[fmt(p12[1],n)]:[]));setStage(12);
-      });
+      var p12=pick(CONFIG.funnel.s12);
+      sendBot([{type:"cta",text:fmt(p11.join("\n"),n)},fmt(p12[0],n)].concat(p12[1]?[fmt(p12[1],n)]:[]));
       return;
     }
-    if(s>=12){sendBot(["Nao perde tempo nao, "+n,"O link ta la te esperando"]);return;}
+    if(s>=11){sendBot(["Nao perde tempo nao, "+n,"O link ta la te esperando"]);return;}
     var rr3=pick(CONFIG.redirect);
     sendBot([fmt(rr3[0],n)].concat(rr3[1]?[fmt(rr3[1],n)]:[]));
   },[sendBot]);
 
   // --- REMARKETING FUNNEL ---
-  // rmStageRef: 0=welcome sent, 1=r2+r3 sent, 2=img+r4+r5 sent, 3=CTA+r7 sent
+  // rmStageRef: 0=r0+r1 enviados; 1=r2 enviado; 2=r3 enviado; 3=img+r4 enviados; 4=r5 enviado; 5=CTA enviado
+  // Cada etapa aguarda o cliente responder antes de avançar.
   var advanceRemarketingFunnel=useCallback(function(text){
     var rs=rmStageRef.current,n=nmRef.current;
     var intent=detectIntent(text);
-    console.log("RM stage:", rs, "| intent:", intent);
+    // rs=0: cliente respondeu ao boas-vindas → mostrar o que perdeu
     if(rs===0){
       rmStageRef.current=1;
       var p2=pick(REMARKETING.r2);
-      sendBot([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[])).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p3=pick(REMARKETING.r3);
-        sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
-      });
+      sendBot([fmt(p2[0],n)].concat(p2[1]?[fmt(p2[1],n)]:[]));
       return;
     }
+    // rs=1: cliente respondeu → perguntar se quer ver
     if(rs===1){
+      rmStageRef.current=2;
+      var p3=pick(REMARKETING.r3);
+      sendBot([fmt(p3[0],n)].concat(p3[1]?[fmt(p3[1],n)]:[]));
+      return;
+    }
+    // rs=2: cliente respondeu à pergunta de ver
+    if(rs===2){
       if(intent==="neg"){
         var p3b=pick(REMARKETING.r3);
         sendBot([fmt(p3b[0],n)].concat(p3b[1]?[fmt(p3b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var p3h=pick(REMARKETING.r3);sendBot([fmt(p3h[0],n)].concat(p3h[1]?[fmt(p3h[1],n)]:[]));return;}
-      // pos or redirect = proceed to image
-      rmStageRef.current=2;
-      sendBot([{type:"img",src:CONFIG.remarketingHookImage}]).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p4=pick(REMARKETING.r4);
-        return sendBot([fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
-      }).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p5=pick(REMARKETING.r5);
-        sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
-      });
+      if(intent==="hes"){
+        var p3h=pick(REMARKETING.r3);
+        sendBot([fmt(p3h[0],n)].concat(p3h[1]?[fmt(p3h[1],n)]:[]));
+        return;
+      }
+      // pos/redirect: imagem + r4 em um único sendBot
+      rmStageRef.current=3;
+      var p4=pick(REMARKETING.r4);
+      sendBot([{type:"img",src:CONFIG.remarketingHookImage},fmt(p4[0],n)].concat(p4[1]?[fmt(p4[1],n)]:[]));
       return;
     }
-    if(rs===2){
+    // rs=3: cliente viu a imagem → continuar com r5
+    if(rs===3){
+      rmStageRef.current=4;
+      var p5=pick(REMARKETING.r5);
+      sendBot([fmt(p5[0],n)].concat(p5[1]?[fmt(p5[1],n)]:[]));
+      return;
+    }
+    // rs=4: cliente reagiu ao r5 → CTA + urgência (fechamento)
+    if(rs===4){
       if(intent==="neg"){
         var p5b=pick(REMARKETING.r5);
         sendBot([fmt(p5b[0],n)].concat(p5b[1]?[fmt(p5b[1],n)]:[]));
         return;
       }
-      if(intent==="hes"){var p5h=pick(REMARKETING.r5);sendBot([fmt(p5h[0],n)].concat(p5h[1]?[fmt(p5h[1],n)]:[]));return;}
-      rmStageRef.current=3;
+      if(intent==="hes"){
+        var p5h=pick(REMARKETING.r5);
+        sendBot([fmt(p5h[0],n)].concat(p5h[1]?[fmt(p5h[1],n)]:[]));
+        return;
+      }
+      // CTA + urgência em um único sendBot — fechamento direto para remarketing
+      rmStageRef.current=5;
       var p6=pick(REMARKETING.r6);
-      sendBot([{type:"cta",text:fmt(p6[0],n)}]).then(function(){
-        return sleep(CONFIG.betweenMessagesDelay);
-      }).then(function(){
-        var p7=pick(REMARKETING.r7);
-        sendBot([fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
-      });
+      var p7=pick(REMARKETING.r7);
+      sendBot([{type:"cta",text:fmt(p6[0],n)},fmt(p7[0],n)].concat(p7[1]?[fmt(p7[1],n)]:[]));
       return;
     }
+    // rs>=5: urgência final
     var p8=pick(REMARKETING.r8);sendBot([fmt(p8[0],n)].concat(p8[1]?[fmt(p8[1],n)]:[]));
   },[sendBot]);
 
@@ -571,25 +609,13 @@ function App(){
     addMsg({from:"user",text:text.trim(),time:tnow(),type:"txt"});
     setInp("");resetRT();
     setLocked(true);
-    var s=stgRef.current;
-    var ctx=detectContext(text);
-    var aiPromise=(s!==0)
-      ?getAIContextReply(text,s,ftRef.current,nmRef.current,ctx)
-      :Promise.resolve(null);
+    // Espera 4s, depois mostra digitando, depois envia 1 mensagem do funil.
+    // Sem AI reply intermediário — garante no máximo 1 resposta por turno.
     sleep(CONFIG.responseStartDelay).then(function(){
-      var runFunnel=function(){
-        if(ftRef.current==="remarketing") advanceRemarketingFunnel(text);
-        else advanceFunnel(text);
-      };
-      return aiPromise.then(function(ctxReply){
-        if(ctxReply){
-          return sendBot([ctxReply]).then(function(){return sleep(CONFIG.betweenMessagesDelay);}).then(runFunnel);
-        } else {
-          return runFunnel();
-        }
-      });
+      if(ftRef.current==="remarketing") return advanceRemarketingFunnel(text);
+      else return advanceFunnel(text);
     });
-  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT,sendBot]);
+  },[locked,addMsg,advanceFunnel,advanceRemarketingFunnel,resetRT]);
 
   // --- INIT ---
   useEffect(function(){
